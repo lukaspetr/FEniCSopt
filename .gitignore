@@ -53,3 +53,9 @@ docs/_build/
 
 # PyBuilder
 target/
+
+# Optimization
+*.dat
+
+# Scripts subfolders
+scripts/*
