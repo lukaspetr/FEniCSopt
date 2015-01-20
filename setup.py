@@ -7,23 +7,13 @@ import sys
 import platform
 
 setup(name='FEniCSopt',
-      version='0.1',
-      description='A special adaptive method for FEniCS',
-      url='http://github.com/storborg/funniest',
-      author='Petr Lukas',
-      author_email='lukas@karlin.mff.cuni.cz',
-      license='MIT',
-      packages=['fenicsopt'],
-      zip_safe=False)
-      
-setup(name='FEniCSopt',
-      version='0.1',
+      version='0.2',
       description = "FEniCS optimization package",
       author = "Petr Lukas",
       author_email='lukas@karlin.mff.cuni.cz',
       url='https://github.com/lukaspetr/FEniCSopt',
       classifiers=[
-          'Development Status :: 0.1 - Unstable',
+          'Development Status :: 0.2 - Unstable',
           'Intended Audience :: Developers',
           'Intended Audience :: Science/Research',
           'Programming Language :: Python :: 2.7',
