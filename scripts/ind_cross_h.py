@@ -189,13 +189,13 @@ for NUM_CELL in range(7, 100, 1):
 	area = assemble(one*dx)
 	h_average = assemble(h*dx)/area
 	error_function = Function(V, assemble(abs(uh-u_exact)*v*dx))
-	l2_norm_of_error = norm(error_function, 'h1')
+	norm_of_error = norm(error_function, 'h1')
 	global_result = {'V_dofs': V.dofmap().global_dimension(),
 	                 'W_dofs': W.dofmap().global_dimension(),
 	                 'phi': res_phi,
 	                 'phi_30': phi_30,
 	                 'h': h_average,
-	                 'error_l2': l2_norm_of_error}
+	                 'error_l2': norm_of_error}
 	global_results.append(global_result)
 	rs.make_results_h(SC_EXAMPLE, NUM_CELL, V, W, uh, u_exact, yh, res_phi)
 

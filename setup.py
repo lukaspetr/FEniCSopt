@@ -21,7 +21,7 @@ setup(name='FEniCSopt',
           'Topic :: Scientific/Engineering :: Mathematics',
           'Topic :: Software Development :: Libraries :: Python Modules',
           ],
-      scripts = [pjoin("scripts", "numtests.py")],
+      scripts = [pjoin("scripts", "ind_cross.py")],
       packages = ["fenicsopt", "fenicsopt.core", "fenicsopt.examples", "fenicsopt.exports"],
       package_dir = {"fenicsopt": "fenicsopt"}
      )

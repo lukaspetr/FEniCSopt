@@ -55,6 +55,20 @@ def solve_supg(V, bcs, epsilon, b, c, f, tau):
 
 ################################################################################
 
+# SOLD method (version 1) to solve convection-diffusion-reaction equation
+def solve_sold(V, bcs, epsilon, b, b_perp, c, f, tau, tau2):
+  u = TrialFunction(V)
+  v = TestFunction(V)
+  a = (epsilon*dot(grad(u),grad(v)) + v*dot(b,grad(u)) + c*u*v)*dx +\
+      inner(-epsilon*div(grad(u))+dot(b,grad(u))+c*u,tau*dot(b,grad(v)))*dx +\
+      inner(dot(b_perp,grad(u)),tau2*dot(b_perp,grad(v)))*dx
+  L = f*v*dx + inner(f,tau*dot(b,grad(v)))*dx
+  uh = Function(V)
+  solve(a == L, uh, bcs)
+  return uh
+
+################################################################################
+
 # Error Indicator With Added Crosswind Derivative Control Term
 def value_of_ind_cross(V, cut_b_elem_dofs, bcs, epsilon, b, b_perp, c, f, tau):
 	fcn_in_ind = lambda u:conditional(gt(u,1), sqrt(u), 2.5*u**2 - 1.5*u**3)
