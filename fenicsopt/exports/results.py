@@ -52,7 +52,6 @@ def make_results(SC_EXAMPLE, NUM_CELL, V, W, uh, u_exact, tau, res, results):
 	template = """
 		unset logscale x
 		unset logscale y
-		set palette gray
 		set pm3d map
 		set xrange [0.0:1.0]
 		set yrange [0.0:1.0]
@@ -79,7 +78,7 @@ def make_results(SC_EXAMPLE, NUM_CELL, V, W, uh, u_exact, tau, res, results):
 		set yrange [*:*] noreverse
 		set logscale x
 		set logscale y
-		set xrange [0.5:40]
+		set xrange [1:100]
 		set size square
 		set terminal postscript eps enhanced 22
 		set format y "10^{{%L}}"
@@ -91,11 +90,50 @@ def make_results(SC_EXAMPLE, NUM_CELL, V, W, uh, u_exact, tau, res, results):
 	# Call Gnuplot And Other Programs
 	popen1 = os.popen('gnuplot ' + folder + hash + '.cmd\n convert '
 		+ folder + hash + '.tau.png -crop 1200x1050+250+150 '
-		+ folder + hash + '.tau.png\n')
-	popen3 = os.popen('epstool --copy --bbox ' + folder + hash + '.eps '
-		+ folder + hash + '.cropped.eps\n')
+		+ folder + hash + '.tau.png\n', 'r')
 	popen4 = os.popen('epstool --copy --bbox ' + folder + hash + '.exact.eps '
-		+ folder + hash + '.exact.cropped.eps\n')
+		+ folder + hash + '.exact.cropped.eps\n', 'r')
+	popen3 = os.popen('epstool --copy --bbox ' + folder + hash + '.eps '
+		+ folder + hash + '.cropped.eps\n', 'r')
+
+
+
+# Make Results For SOLD Parameter
+def make_results_sold_par(SC_EXAMPLE, NUM_CELL, V, W, tau):
+
+	V_DEGREE = V.ufl_element().degree()
+	W_DEGREE = W.ufl_element().degree()
+	V_FAMILY = V.ufl_element()._short_name
+	W_FAMILY = W.ufl_element()._short_name
+
+	hash = V_FAMILY + str(V_DEGREE) + W_FAMILY + str(W_DEGREE)
+	folder = str(SC_EXAMPLE) + '/' + hash + '/'
+	if not os.path.exists(folder):
+		os.makedirs(folder)
+	gnufile = open(folder + hash + '.cmd', 'w')
+
+	# Plot Tau On Equidistant Mesh With Gnuplot
+	gnuplot_square_equidistant(folder + hash + '.tau2.map', 600, tau)
+	template = """
+		unset logscale x
+		unset logscale y
+		set pm3d map
+		set xtics textcolor rgb "black"
+		set ytics textcolor rgb "black"
+		set xrange [0.0:1.0]
+		set yrange [0.0:1.0]
+		set cbrange [0.0:0.1]
+		set size square
+		set terminal png transparent interlace truecolor font "Helvetica,36" enhanced size 1600,1360
+		set output "{folder}{hash}.tau2.png"
+		sp "{folder}{hash}.tau2.map" title ""
+	"""
+	gnufile.write(template.format(folder = folder, hash = hash))
+
+	# Call Gnuplot And Other Programs
+	popen1 = os.popen('gnuplot ' + folder + hash + '.cmd\n convert '
+		+ folder + hash + '.tau2.png -crop 1200x1050+250+150 '
+		+ folder + hash + '.tau2.png\n', 'r')
 
 
 
@@ -234,7 +272,7 @@ def make_global_results_h(SC_EXAMPLE, global_results):
 	gnufile.write(template.format(folder = folder, filename = filename, example = SC_EXAMPLE))
 
 	# Call Gnuplot
-	popen2 = os.popen('gnuplot ' + folder + 'gnu.h.cmd', 'r')
+	popen2 = os.popen('gnuplot ' + folder + 'gnu.h.cmd\n', 'r')
 	popen3 = os.popen('epstool --copy --bbox ' + folder + 'h.eps '
-		+ folder + 'h.cropped.eps')
+		+ folder + 'h.cropped.eps\n')
 

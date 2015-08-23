@@ -11,7 +11,7 @@ import fenicsopt.exports.results as rs
 
 ################################################################################
 
-SC_EXAMPLE = 20 # 8, 9, 20, 55
+SC_EXAMPLE = 9 # 8, 9, 20, 55
 
 # Mesh
 NUM_CELL = 33
@@ -29,15 +29,16 @@ cut_b_elem_dofs = get_boundary(mesh, DG0)
 setups = [
 	{ "V_TYPE": "CG", "V_DEGREE": 1, "W_TYPE": "DG", "W_DEGREE": 1 },
 	{ "V_TYPE": "CG", "V_DEGREE": 2, "W_TYPE": "DG", "W_DEGREE": 1 },
+	{ "V_TYPE": "CG", "V_DEGREE": 3, "W_TYPE": "DG", "W_DEGREE": 1 },
 ]
 
 global_results = []
 
 for setup in setups:
 	# Function Spaces on the mesh
-	V =  FunctionSpace(mesh, setup["V_TYPE"], setup["V_DEGREE"])
-	v   = TestFunction(V)
-	W =  FunctionSpace(mesh, setup["W_TYPE"], setup["W_DEGREE"])
+	V = FunctionSpace(mesh, setup["V_TYPE"], setup["V_DEGREE"])
+	v = TestFunction(V)
+	W = FunctionSpace(mesh, setup["W_TYPE"], setup["W_DEGREE"])
 	bc_V_zero = DirichletBC(V, 0., whole_boundary)
 
 	# Data
@@ -48,13 +49,10 @@ for setup in setups:
 	# Basic Definitions
 	p = 1 # Constant(V.ufl_element().degree())
 	tau = compute_tau(W, h, p, epsilon, b)
-	tau2vector = tau.vector().array()
-	tau2vector = np.zeros(np.size(tau2vector))
-	tau2 = Function(W)
-	tau2.vector()[:] = tau2vector
-
-	#uh = solve_sold(V, bcs, epsilon, b, b_perp, c, f, tau, tau2)
 	uh = solve_supg(V, bcs, epsilon, b, c, f, tau)
+
+	tau2 = compute_sold_tau_codina(uh, 0.7, W, h, epsilon, b, c, f)
+	uh = solve_sold(V, bcs, epsilon, b, b_perp, c, f, tau, tau2)
 
 	one = project(1., V)
 	area = assemble(one*dx)

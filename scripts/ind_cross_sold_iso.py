@@ -11,7 +11,7 @@ import fenicsopt.exports.results as rs
 
 ################################################################################
 
-SC_EXAMPLE = 8 # 8, 9, 20, 55
+SC_EXAMPLE = 9 # 8, 9, 20, 55
 
 # Mesh
 NUM_CELL = 33
@@ -26,6 +26,7 @@ def whole_boundary(x, on_boundary):
 
 cut_b_elem_dofs = get_boundary(mesh, DG0)
 
+'''
 setups = [
 	{ "V_TYPE": "CG", "V_DEGREE": 1, "W_TYPE": "DG", "W_DEGREE": 0 },
 	{ "V_TYPE": "CG", "V_DEGREE": 1, "W_TYPE": "DG", "W_DEGREE": 1 },
@@ -58,65 +59,117 @@ setups = [
 ]
 '''
 setups = [
-	{ "V_TYPE": "CG", "V_DEGREE": 1, "W_TYPE": "DG", "W_DEGREE": 1 },
 	{ "V_TYPE": "CG", "V_DEGREE": 2, "W_TYPE": "DG", "W_DEGREE": 1 },
 ]
-'''
+
 global_results = []
 
 for setup in setups:
 	# Function Spaces on the mesh
-	V =  FunctionSpace(mesh, setup["V_TYPE"], setup["V_DEGREE"])
-	v   = TestFunction(V)
-	W =  FunctionSpace(mesh, setup["W_TYPE"], setup["W_DEGREE"])
+	V = FunctionSpace(mesh, setup["V_TYPE"], setup["V_DEGREE"])
+	v = TestFunction(V)
+	W = FunctionSpace(mesh, setup["W_TYPE"], setup["W_DEGREE"])
+	# Function space for the convection field
+	B = VectorFunctionSpace(mesh, "DG", setup["V_DEGREE"]-1)
+	# Other spaces for precise numerical integration
+	V_grad_norm = FunctionSpace(mesh, "DG", (setup["V_DEGREE"]-1))
+	V_grad_squared = FunctionSpace(mesh, "DG", 2*(setup["V_DEGREE"]-1))
+	
+	# Dirichlet Boundary Condition
 	bc_V_zero = DirichletBC(V, 0., whole_boundary)
 
 	# Data
 	bcs, epsilon, c, b, f, u_exact = sc_setup(V, SC_EXAMPLE)
 	b_perp = as_vector([( b[1]/sqrt(b[0]**2+b[1]**2)),
 		                  (-b[0]/sqrt(b[0]**2+b[1]**2))]) # ! possible division by 0
-
+	b = project(b, B)
+	b_perp = project(b_perp, B)
+	
 	# Basic Definitions
 	p = 1 # Constant(V.ufl_element().degree())
 	tau = compute_tau(W, h, p, epsilon, b)
+	uh = solve_supg(V, bcs, epsilon, b, c, f, tau)
+	
+	b_parallel = compute_sold_iso_b_parallel(mesh, V, B, uh, b)
+	
+	sigma = compute_sold_iso_sigma(mesh, V, B, W, uh, 1., h, b, b_parallel)
+	
+	uh = solve_sold_iso(V, bcs, epsilon, b, b_parallel, c, f, tau, sigma)
+	plot(uh)
+	sigma = compute_sold_iso_sigma(mesh, V, B, W, uh, 1., h, b, b_parallel)
+	uh = solve_sold_iso(V, bcs, epsilon, b, b_parallel, c, f, tau, sigma)
+	sigma = compute_sold_iso_sigma(mesh, V, B, W, uh, 1., h, b, b_parallel)
+	uh = solve_sold_iso(V, bcs, epsilon, b, b_parallel, c, f, tau, sigma)
+	sigma = compute_sold_iso_sigma(mesh, V, B, W, uh, 1., h, b, b_parallel)
+	uh = solve_sold_iso(V, bcs, epsilon, b, b_parallel, c, f, tau, sigma)
+	sigma = compute_sold_iso_sigma(mesh, V, B, W, uh, 1., h, b, b_parallel)
+	plot(uh)
+	interactive()
 
+'''
 	# Phi and dPhi Functions
 	def phi(tau):
 		global results
 		global phi_30
+		tau1 = tau[:len(tau)/2]
+		tau2 = tau[len(tau)/2:]
 		yh = Function(W)
-		yh.vector()[:] = tau
-		error = value_of_ind_cross(V, cut_b_elem_dofs, bcs, epsilon, b, b_perp, c, f, yh)
+		yh.vector()[:] = tau1
+		yh2 = Function(W)
+		yh2.vector()[:] = tau2
+		error = value_of_ind_cross_sold_iso(V, cut_b_elem_dofs, bcs,
+			epsilon, b, b_perp, c, f, yh, yh2)
 		t_length = pyt.time()-start
 		results.append([t_length,error])
-		if t_length < 50:
+		if t_length < 30:
 			phi_30 = error
 		return error
 
 	def dPhi(tau):
+		tau1 = tau[:len(tau)/2]
+		tau2 = tau[len(tau)/2:]
 		yh = Function(W)
-		yh.vector()[:] = tau
-		D_Phi_h = der_of_ind_cross(V, W, cut_b_elem_dofs, bcs, bc_V_zero, epsilon, b, b_perp, c, f, yh)
-		der = D_Phi_h.vector().array()
+		yh.vector()[:] = tau1
+		yh2 = Function(W)
+		yh2.vector()[:] = tau2
+		D_Phi_h_supg, D_Phi_h_sold = der_of_ind_cross_sold_iso(V, W,
+			cut_b_elem_dofs, bcs, bc_V_zero,
+			epsilon, b, b_perp, c, f, yh, yh2)
+		der1 = D_Phi_h_supg.vector().array()
+		der2 = D_Phi_h_sold.vector().array()
+		der = np.concatenate((der1, der2), axis=1)
 		return der
 
 	# Minimization (Bounds Are Set Up First)
-	initial = tau.vector().array()
-	lower_bound = 0 * initial
-	upper_bound = 2.0 * initial
-	yh_bounds = np.array([lower_bound,upper_bound])
+	initial1 = tau.vector().array()
+	initial2 = 1.0 * tau2.vector().array()
+	initial = np.concatenate((initial1, initial2), axis=1)
+	lower_bound1 = 1 * initial1
+	upper_bound1 = 1 * initial1
+	lower_bound2 = 0 * initial2
+	upper_bound2 = 5 * initial2
+	yh_bounds1 = np.array([lower_bound1,upper_bound1])
+	yh_bounds2 = np.array([lower_bound2,upper_bound2])
+	yh_bounds = np.concatenate((yh_bounds1, yh_bounds2), axis=1)
+	print(yh_bounds)
 	yh_bounds = np.transpose(yh_bounds)
+
 	results = []
 	start = pyt.time()
 	phi_30 = 1e+10
 	res = minimize(phi, initial, method='L-BFGS-B', jac=dPhi, bounds=yh_bounds,
-	  options={'gtol': 1e-16, 'ftol': 1e-16, 'maxiter': 250, 'disp': True})
+	  options={'gtol': 1e-14, 'ftol': 1e-14, 'maxiter': 250, 'disp': True})
 
 	# Results Of Minimization
-	yh = Function(W)
-	yh.vector()[:] = res.x
-	uh = solve_supg(V, bcs, epsilon, b, c, f, yh)
-	res_phi = phi(yh.vector())
+	yh1 = Function(W)
+	yh2 = Function(W)
+	tau = res.x
+	tau1 = tau[:len(tau)/2]
+	tau2 = tau[len(tau)/2:]
+	yh1.vector()[:] = tau1
+	yh2.vector()[:] = tau2
+	uh = solve_sold_iso(V, bcs, epsilon, b, b_perp, c, f, yh1, yh2)
+	res_phi = phi(tau)
 	
 	one = project(1., V)
 	area = assemble(one*dx)
@@ -131,7 +184,9 @@ for setup in setups:
 	                 'h': h_average,
 	                 'error_l2': l2_norm_of_error}
 	global_results.append(global_result)
-	rs.make_results(SC_EXAMPLE, NUM_CELL, V, W, uh, u_exact, yh, res_phi, results)
+	rs.make_results(SC_EXAMPLE, NUM_CELL, V, W, uh, u_exact, yh1, res_phi, results)
+	rs.make_results_sold_par(SC_EXAMPLE, NUM_CELL, V, W, yh2)
 
 # Global results
 rs.make_global_results(SC_EXAMPLE, global_results)
+'''

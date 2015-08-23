@@ -9,7 +9,7 @@ def sc_setup(V, sc_example):
     def zero(x, on_boundary):
       return on_boundary and (x[0] > (1. - DOLFIN_EPS) or  x[1] < 0.7)
     def one (x, on_boundary):
-      return on_boundary and (x[0] < (1. - DOLFIN_EPS) and x[1] > 0.7)
+      return on_boundary and (x[0] < (1. - DOLFIN_EPS) and x[1] >= 0.7)
     g0 = Constant(0.)
     g1 = Constant(1.)
     bc0 = DirichletBC(V, g0, zero)
@@ -24,7 +24,7 @@ def sc_setup(V, sc_example):
     class U_exact_8(Expression):
       def eval(self, value, x):
         if (x[0] > 0.0001 and x[0] < 0.9999 and x[1] > 0.0001 and x[1] < 0.9999):
-          if (x[1] > (0.7 + x[0]*math.cos(theta)/math.sin(theta))):
+          if (x[1] > (0.7 + x[0]*math.sin(theta)/math.cos(theta))):
             value[0] = 1.
           else:
             value[0] = 0.
