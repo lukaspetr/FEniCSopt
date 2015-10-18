@@ -93,9 +93,9 @@ for setup in setups:
 	b_parallel = compute_sold_iso_b_parallel(mesh, V, B, uh, b)
 	
 	sigma = compute_sold_iso_sigma(mesh, V, B, W, uh, 1., h, b, b_parallel)
-	
-	uh = solve_sold_iso(V, bcs, epsilon, b, b_parallel, c, f, tau, sigma)
 	plot(uh)
+	uh = solve_sold_iso(V, bcs, epsilon, b, b_parallel, c, f, tau, sigma)
+	
 	sigma = compute_sold_iso_sigma(mesh, V, B, W, uh, 1., h, b, b_parallel)
 	uh = solve_sold_iso(V, bcs, epsilon, b, b_parallel, c, f, tau, sigma)
 	sigma = compute_sold_iso_sigma(mesh, V, B, W, uh, 1., h, b, b_parallel)
@@ -103,6 +103,7 @@ for setup in setups:
 	sigma = compute_sold_iso_sigma(mesh, V, B, W, uh, 1., h, b, b_parallel)
 	uh = solve_sold_iso(V, bcs, epsilon, b, b_parallel, c, f, tau, sigma)
 	sigma = compute_sold_iso_sigma(mesh, V, B, W, uh, 1., h, b, b_parallel)
+	uh = solve_sold_iso(V, bcs, epsilon, b, b_parallel, c, f, tau, sigma)
 	plot(uh)
 	interactive()
 
