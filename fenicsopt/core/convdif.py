@@ -115,7 +115,7 @@ def solve_sold_iso(V, bcs, epsilon, b, b_parallel, c, f, tau, sigma):
   a = (epsilon*dot(grad(u),grad(v)) + v*dot(b,grad(u)) + c*u*v)*dx +\
       inner(-epsilon*div(grad(u))+dot(b,grad(u))+c*u,tau*dot(b,grad(v)))*dx +\
       inner(-epsilon*div(grad(u))+dot(b,grad(u))+c*u,sigma*dot(b_parallel,grad(v)))*dx
-  L = f*v*dx + inner(f,tau*dot(b,grad(v)))*dx
+  L = f*v*dx + inner(f,tau*dot(b,grad(v)))*dx + inner(f,sigma*dot(b_parallel,grad(v)))*dx
   uh = Function(V)
   solve(a == L, uh, bcs)
   return uh
@@ -231,10 +231,10 @@ def value_of_ind_cross_sold(V, cut_b_elem_dofs, bcs, epsilon, b, b_perp, c, f, t
 	  )*cut_b_elem_dofs*dx)
 	return error
 
-def value_of_ind_cross_sold_iso(V, cut_b_elem_dofs, bcs, epsilon, b, b_perp, c, f, tau, sigma):
+def value_of_ind_cross_sold_iso(V, cut_b_elem_dofs, bcs, epsilon, b, b_perp, b_parallel, c, f, tau, sigma):
 	fcn_in_ind = lambda u:conditional(gt(u,1), sqrt(u), 2.5*u**2 - 1.5*u**3)
 	v = TestFunction(V)
-	uh = solve_sold_iso(V, bcs, epsilon, b, b_perp, c, f, tau, tau2)
+	uh = solve_sold_iso(V, bcs, epsilon, b, b_parallel, c, f, tau, tau2)
 	# Indicator
 	error = assemble(
 	  ((-epsilon*div(grad(uh))+dot(b,grad(uh))+c*uh-f)**2
@@ -306,13 +306,13 @@ def der_of_ind_cross_sold(V, W, cut_b_elem_dofs, bcs, bc_V_zero,
 	return D_Phi_h_supg, D_Phi_h_sold
 
 def der_of_ind_cross_sold_iso(V, W, cut_b_elem_dofs, bcs, bc_V_zero,
-		epsilon, b, b_perp, c, f, tau, sigma):
+		epsilon, b, b_perp, b_parallel, c, f, tau, sigma):
 	der_of_fcn_in_ind = lambda u:conditional(gt(u,1),0.5/sqrt(u),5.*u-4.5*u**2)
 	psi = TrialFunction(V)
 	psi2 = TrialFunction(V)
 	v = TestFunction(V)
 	w = TestFunction(W)
-	uh = solve_sold_iso(V, bcs, epsilon, b, b_perp, c, f, tau, sigma)
+	uh = solve_sold_iso(V, bcs, epsilon, b, b_parallel, c, f, tau, sigma)
 	# Derivatives
 	derivatives_assemble = assemble((2*inner(
 	  (-epsilon*div(grad(uh))+dot(b,grad(uh))+c*uh-f),
@@ -324,7 +324,7 @@ def der_of_ind_cross_sold_iso(V, W, cut_b_elem_dofs, bcs, bc_V_zero,
 	# Adjoint Approach To Compute Derivatives According To tau or sigma
 	a = (epsilon*dot(grad(v),grad(psi)) + psi*dot(b,grad(v)) + c*v*psi)*dx +\
 	    inner(-epsilon*div(grad(v))+dot(b,grad(v))+c*v,tau*dot(b,grad(psi)))*dx +\
-	    inner(dot(b_perp,grad(v)),sigma*dot(b_perp,grad(psi)))*dx
+	    inner(-epsilon*div(grad(v))+dot(b,grad(v))+c*v,sigma*dot(b_parallel,grad(psi)))*dx
 	L = derivatives*v*dx
 	psih = Function(V)
 	solve(a == L, psih, bc_V_zero)
