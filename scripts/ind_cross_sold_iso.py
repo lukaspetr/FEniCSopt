@@ -107,19 +107,19 @@ for setup in setups:
 	plot(uh)
 	interactive()
 
-'''
+
 	# Phi and dPhi Functions
 	def phi(tau):
 		global results
 		global phi_30
 		tau1 = tau[:len(tau)/2]
-		tau2 = tau[len(tau)/2:]
+		sigma = tau[len(tau)/2:]
 		yh = Function(W)
 		yh.vector()[:] = tau1
 		yh2 = Function(W)
-		yh2.vector()[:] = tau2
+		yh2.vector()[:] = sigma
 		error = value_of_ind_cross_sold_iso(V, cut_b_elem_dofs, bcs,
-			epsilon, b, b_perp, c, f, yh, yh2)
+			epsilon, b, b_perp, b_parallel, c, f, yh, yh2)
 		t_length = pyt.time()-start
 		results.append([t_length,error])
 		if t_length < 30:
@@ -128,14 +128,14 @@ for setup in setups:
 
 	def dPhi(tau):
 		tau1 = tau[:len(tau)/2]
-		tau2 = tau[len(tau)/2:]
+		sigma = tau[len(tau)/2:]
 		yh = Function(W)
 		yh.vector()[:] = tau1
 		yh2 = Function(W)
-		yh2.vector()[:] = tau2
+		yh2.vector()[:] = sigma
 		D_Phi_h_supg, D_Phi_h_sold = der_of_ind_cross_sold_iso(V, W,
 			cut_b_elem_dofs, bcs, bc_V_zero,
-			epsilon, b, b_perp, c, f, yh, yh2)
+			epsilon, b, b_perp, b_parallel, c, f, yh, yh2)
 		der1 = D_Phi_h_supg.vector().array()
 		der2 = D_Phi_h_sold.vector().array()
 		der = np.concatenate((der1, der2), axis=1)
@@ -143,12 +143,12 @@ for setup in setups:
 
 	# Minimization (Bounds Are Set Up First)
 	initial1 = tau.vector().array()
-	initial2 = 1.0 * tau2.vector().array()
+	initial2 = 0.2 * sigma.vector().array()
 	initial = np.concatenate((initial1, initial2), axis=1)
-	lower_bound1 = 1 * initial1
+	lower_bound1 = 0 * initial1
 	upper_bound1 = 1 * initial1
 	lower_bound2 = 0 * initial2
-	upper_bound2 = 5 * initial2
+	upper_bound2 = 1.5 * initial2
 	yh_bounds1 = np.array([lower_bound1,upper_bound1])
 	yh_bounds2 = np.array([lower_bound2,upper_bound2])
 	yh_bounds = np.concatenate((yh_bounds1, yh_bounds2), axis=1)
@@ -159,17 +159,20 @@ for setup in setups:
 	start = pyt.time()
 	phi_30 = 1e+10
 	res = minimize(phi, initial, method='L-BFGS-B', jac=dPhi, bounds=yh_bounds,
-	  options={'gtol': 1e-14, 'ftol': 1e-14, 'maxiter': 250, 'disp': True})
+	  options={'gtol': 1e-14, 'ftol': 1e-14, 'maxiter': 30, 'disp': True})
 
 	# Results Of Minimization
 	yh1 = Function(W)
 	yh2 = Function(W)
 	tau = res.x
 	tau1 = tau[:len(tau)/2]
-	tau2 = tau[len(tau)/2:]
+	sigma = tau[len(tau)/2:]
 	yh1.vector()[:] = tau1
-	yh2.vector()[:] = tau2
-	uh = solve_sold_iso(V, bcs, epsilon, b, b_perp, c, f, yh1, yh2)
+	yh2.vector()[:] = sigma
+	
+	plot(yh2)
+	
+	uh = solve_sold_iso(V, bcs, epsilon, b, b_parallel, c, f, yh1, yh2)
 	res_phi = phi(tau)
 	
 	one = project(1., V)
@@ -190,4 +193,4 @@ for setup in setups:
 
 # Global results
 rs.make_global_results(SC_EXAMPLE, global_results)
-'''
+

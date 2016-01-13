@@ -102,10 +102,13 @@ def compute_sold_iso_sigma(mesh, V, B, W, uh, iso_u_0, h, b, b_parallel):
   # Eta
   eta_of_bs = project(eta(b_parallel_norm/b_norm), W)
   eta_of_bs_array = eta_of_bs.vector().array()
-  eta_of_bs_array = np.clip(eta_of_bs_array, 0.001, 100000.) # For computations
+  eta_of_bs_array = np.clip(eta_of_bs_array, 0., 100000.) # For computations
   eta_of_bs.vector()[:] = eta_of_bs_array
   
   sigma = project(h*h*eta_of_bs*grad_uh/2./b_parallel_norm/iso_u_0, W)
+  sigma_array = sigma.vector().array()
+  sigma_array = np.clip(sigma_array, 0., 100000.) # For computations
+  sigma.vector()[:] = sigma_array
   return sigma
 
 # SOLD method - isotropic diffusion to solve convection-diffusion-reaction equation
@@ -234,7 +237,7 @@ def value_of_ind_cross_sold(V, cut_b_elem_dofs, bcs, epsilon, b, b_perp, c, f, t
 def value_of_ind_cross_sold_iso(V, cut_b_elem_dofs, bcs, epsilon, b, b_perp, b_parallel, c, f, tau, sigma):
 	fcn_in_ind = lambda u:conditional(gt(u,1), sqrt(u), 2.5*u**2 - 1.5*u**3)
 	v = TestFunction(V)
-	uh = solve_sold_iso(V, bcs, epsilon, b, b_parallel, c, f, tau, tau2)
+	uh = solve_sold_iso(V, bcs, epsilon, b, b_parallel, c, f, tau, sigma)
 	# Indicator
 	error = assemble(
 	  ((-epsilon*div(grad(uh))+dot(b,grad(uh))+c*uh-f)**2
@@ -334,8 +337,8 @@ def der_of_ind_cross_sold_iso(V, W, cut_b_elem_dofs, bcs, bc_V_zero,
 	D_Phi_h_assemble_supg = assemble(D_Phi_h_ufl_supg)
 	D_Phi_h_supg = Function(W, D_Phi_h_assemble_supg)
 	# Compute D_Phi_h SOLD sigma
-	D_Phi_h_ufl_sold = (-inner(dot(b_perp,grad(uh)),
-		w*dot(b_perp,grad(psih))))*dx
+	D_Phi_h_ufl_sold = (-inner(-epsilon*div(grad(uh))+dot(b,grad(uh))+c*uh,
+		w*dot(b_parallel,grad(psih))) + inner(f,w*dot(b_parallel,grad(psih))))*dx
 	D_Phi_h_assemble_sold = assemble(D_Phi_h_ufl_sold)
 	D_Phi_h_sold = Function(W, D_Phi_h_assemble_sold)
 	return D_Phi_h_supg, D_Phi_h_sold
