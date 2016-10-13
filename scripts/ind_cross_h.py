@@ -188,6 +188,7 @@ for NUM_CELL in range(7, 100, 1):
 	one = project(1., V)
 	area = assemble(one*dx)
 	h_average = assemble(h*dx)/area
+
 	error_function = Function(V, assemble(abs(uh-u_exact)*v*dx))
 	norm_of_error = norm(error_function, 'h1')
 	global_result = {'V_dofs': V.dofmap().global_dimension(),
@@ -200,3 +201,4 @@ for NUM_CELL in range(7, 100, 1):
 	rs.make_results_h(SC_EXAMPLE, NUM_CELL, V, W, uh, u_exact, yh, res_phi)
 
 rs.make_global_results_h(SC_EXAMPLE, global_results)
+

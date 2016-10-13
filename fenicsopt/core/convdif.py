@@ -123,6 +123,28 @@ def solve_sold_iso(V, bcs, epsilon, b, b_parallel, c, f, tau, sigma):
   solve(a == L, uh, bcs)
   return uh
 
+# SOLD method - isotropic diffusion - compute the residue
+def residue_sold_iso(V, uh, epsilon, b, b_parallel, c, f, tau, sigma):
+  v = TestFunction(V)
+  a = Function(V)
+  a.vector()[:] = assemble((epsilon*dot(grad(uh),grad(v)) + v*dot(b,grad(uh)) + c*uh*v)*dx +\
+      inner(-epsilon*div(grad(uh))+dot(b,grad(uh))+c*uh,tau*dot(b,grad(v)))*dx +\
+      inner(-epsilon*div(grad(uh))+dot(b,grad(uh))+c*uh,sigma*dot(b_parallel,grad(v)))*dx -\
+      f*v*dx - inner(f,tau*dot(b,grad(v)))*dx - inner(f,sigma*dot(b_parallel,grad(v)))*dx)
+  return norm(a)
+
+# Iteration, returns sigma
+def iterate_sold_iso(mesh, V, B, W, bcs, iso_u_0, h, epsilon, b, c, f, tau, uh0, tol):
+  uh = uh0
+  residue = tol + 1.0
+  while residue > tol:
+    b_parallel = compute_sold_iso_b_parallel(mesh, V, B, uh, b)
+    sigma = compute_sold_iso_sigma(mesh, V, B, W, uh, iso_u_0, h, b, b_parallel)
+    residue = residue_sold_iso(V, uh, epsilon, b, b_parallel, c, f, tau, sigma)
+    uh = solve_sold_iso(V, bcs, epsilon, b, b_parallel, c, f, tau, sigma)
+    print(residue)
+  return sigma, b_parallel
+
 ################################################################################
 
 # Compute the Tau Parameter From SOLD Method proposed by Codina

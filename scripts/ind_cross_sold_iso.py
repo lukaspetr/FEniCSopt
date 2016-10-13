@@ -93,17 +93,30 @@ for setup in setups:
 	b_parallel = compute_sold_iso_b_parallel(mesh, V, B, uh, b)
 	
 	sigma = compute_sold_iso_sigma(mesh, V, B, W, uh, 1., h, b, b_parallel)
-	plot(uh)
-	uh = solve_sold_iso(V, bcs, epsilon, b, b_parallel, c, f, tau, sigma)
+	print residue_sold_iso(V, uh, epsilon, b, b_parallel, c, f, tau, sigma)
 	
-	sigma = compute_sold_iso_sigma(mesh, V, B, W, uh, 1., h, b, b_parallel)
 	uh = solve_sold_iso(V, bcs, epsilon, b, b_parallel, c, f, tau, sigma)
 	sigma = compute_sold_iso_sigma(mesh, V, B, W, uh, 1., h, b, b_parallel)
+	print residue_sold_iso(V, uh, epsilon, b, b_parallel, c, f, tau, sigma)
+	
 	uh = solve_sold_iso(V, bcs, epsilon, b, b_parallel, c, f, tau, sigma)
 	sigma = compute_sold_iso_sigma(mesh, V, B, W, uh, 1., h, b, b_parallel)
+	print residue_sold_iso(V, uh, epsilon, b, b_parallel, c, f, tau, sigma)
+	
 	uh = solve_sold_iso(V, bcs, epsilon, b, b_parallel, c, f, tau, sigma)
 	sigma = compute_sold_iso_sigma(mesh, V, B, W, uh, 1., h, b, b_parallel)
+	print residue_sold_iso(V, uh, epsilon, b, b_parallel, c, f, tau, sigma)
+	
 	uh = solve_sold_iso(V, bcs, epsilon, b, b_parallel, c, f, tau, sigma)
+	sigma = compute_sold_iso_sigma(mesh, V, B, W, uh, 1., h, b, b_parallel)
+	print residue_sold_iso(V, uh, epsilon, b, b_parallel, c, f, tau, sigma)
+	
+	uh = solve_sold_iso(V, bcs, epsilon, b, b_parallel, c, f, tau, sigma)
+	print residue_sold_iso(V, uh, epsilon, b, b_parallel, c, f, tau, sigma)
+	sigma = compute_sold_iso_sigma(mesh, V, B, W, uh, 1., h, b, b_parallel)
+	print residue_sold_iso(V, uh, epsilon, b, b_parallel, c, f, tau, sigma)
+	
+	
 	plot(uh)
 	interactive()
 
