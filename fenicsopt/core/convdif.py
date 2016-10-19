@@ -136,10 +136,14 @@ def residue_sold_iso(V, uh, epsilon, b, b_parallel, c, f, tau, sigma):
 # Iteration, returns sigma
 def iterate_sold_iso(mesh, V, B, W, bcs, iso_u_0, h, epsilon, b, c, f, tau, uh0, tol):
   uh = uh0
-  residue = tol + 1.0
-  while residue > tol:
+  b_parallel = compute_sold_iso_b_parallel(mesh, V, B, uh, b)
+  sigma = compute_sold_iso_sigma(mesh, V, B, W, uh, iso_u_0, h, b, b_parallel)
+  residue = residue_sold_iso(V, uh, epsilon, b, b_parallel, c, f, tau, sigma)
+  residue_old = 2.0 * residue
+  while residue/residue_old < 0.99:
     b_parallel = compute_sold_iso_b_parallel(mesh, V, B, uh, b)
     sigma = compute_sold_iso_sigma(mesh, V, B, W, uh, iso_u_0, h, b, b_parallel)
+    residue_old = residue
     residue = residue_sold_iso(V, uh, epsilon, b, b_parallel, c, f, tau, sigma)
     uh = solve_sold_iso(V, bcs, epsilon, b, b_parallel, c, f, tau, sigma)
     print(residue)
