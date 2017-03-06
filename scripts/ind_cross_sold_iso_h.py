@@ -17,7 +17,7 @@ setup =	{ "V_TYPE": "CG", "V_DEGREE": 1, "W_TYPE": "DG", "W_DEGREE": 0 }
 
 global_results = []
 
-for NUM_CELL in range(8, 80, 1):
+for NUM_CELL in range(32, 34, 1):
   # Mesh
   mesh = UnitSquareMesh(NUM_CELL,NUM_CELL)
   h = CellSize(mesh)
@@ -97,10 +97,10 @@ for NUM_CELL in range(8, 80, 1):
   initial1 = tau.vector().array()
   initial2 = 0.9 * sigma.vector().array()
   initial = np.concatenate((initial1, initial2), axis=1)
-  lower_bound1 = 1.0 * initial1
-  upper_bound1 = 1.0 * initial1
+  lower_bound1 = 0.0 * initial1
+  upper_bound1 = 2.0 * initial1
   lower_bound2 = 0.0 * initial2
-  upper_bound2 = 2.0 * initial2
+  upper_bound2 = 0.0 * initial2
   yh_bounds1 = np.array([lower_bound1,upper_bound1])
   yh_bounds2 = np.array([lower_bound2,upper_bound2])
   yh_bounds = np.concatenate((yh_bounds1, yh_bounds2), axis=1)
@@ -111,7 +111,7 @@ for NUM_CELL in range(8, 80, 1):
   start = pyt.time()
   phi_30 = 1e+10
   res = minimize(phi, initial, method='L-BFGS-B', jac=dPhi, bounds=yh_bounds,
-    options={'gtol': 1e-14, 'ftol': 1e-14, 'maxiter': 200, 'disp': True})
+    options={'gtol': 1e-14, 'ftol': 1e-14, 'maxiter': 250, 'disp': True})
 
   # Results Of Minimization
   yh1 = Function(W)
