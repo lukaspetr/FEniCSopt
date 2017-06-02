@@ -276,3 +276,32 @@ def make_global_results_h(SC_EXAMPLE, global_results):
 	popen3 = os.popen('epstool --copy --bbox ' + folder + 'h.eps '
 		+ folder + 'h.cropped.eps\n')
 
+# Make the line of phi
+def make_line_results(SC_EXAMPLE, V, W, results):
+
+	V_DEGREE = V.ufl_element().degree()
+	W_DEGREE = W.ufl_element().degree()
+	V_FAMILY = V.ufl_element()._short_name
+	W_FAMILY = W.ufl_element()._short_name
+
+	hash = V_FAMILY + str(V_DEGREE) + W_FAMILY + str(W_DEGREE)
+	folder = str(SC_EXAMPLE) + '/' + hash + '/'
+	if not os.path.exists(folder):
+		os.makedirs(folder)
+
+	filename = folder + 'line_results.gnu'
+	gnuplot_graph(filename, results)
+	file = open(folder + 'gnu_line.cmd', 'w+')
+	template = """
+		set terminal postscript eps enhanced 22
+		set output "{folder}line.eps"
+		p "{filename}" title "data"
+	"""
+	gnufile = open(folder + 'gnu_line.cmd', 'w')
+	gnufile.write(template.format(folder = folder, filename = filename, example = SC_EXAMPLE))
+
+	# Call Gnuplot
+	popen2 = os.popen('gnuplot ' + folder + 'gnu_line.cmd\n', 'r')
+	popen3 = os.popen('epstool --copy --bbox ' + folder + 'line.eps '
+		+ folder + 'line.cropped.eps\n')
+

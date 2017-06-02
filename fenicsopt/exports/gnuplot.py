@@ -1,6 +1,7 @@
 from __future__ import division
 from dolfin import *
 import numpy
+import pprint
 
 # Gnuplot related functions
 
@@ -43,3 +44,14 @@ def gnuplot_square_equidistant(file, N, fun):
 			f = fun(p)
 			print >>file, '%e  %e  %e' % (x,y,f)
 		print >>file, ''
+
+################################################################################
+
+# graph output
+def gnuplot_graph(file, data):
+	file = open(file, 'w+')
+	for point in data:
+		pprint.pprint(point)
+		print >>file, '%e  %e' % (point['position'], point['phi'])
+	print >>file, ''
+
