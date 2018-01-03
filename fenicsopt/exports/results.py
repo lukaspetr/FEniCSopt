@@ -295,7 +295,7 @@ def make_line_results(SC_EXAMPLE, V, W, results):
 	template = """
 		set terminal postscript eps enhanced 22
 		set output "{folder}line.eps"
-		p "{filename}" title "data"
+		p "{filename}" w l title "data"
 	"""
 	gnufile = open(folder + 'gnu_line.cmd', 'w')
 	gnufile.write(template.format(folder = folder, filename = filename, example = SC_EXAMPLE))

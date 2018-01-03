@@ -11,7 +11,7 @@ import fenicsopt.exports.results as rs
 
 ################################################################################
 
-SC_EXAMPLE = 20 # 8, 9, 20, 55
+SC_EXAMPLE = 55 # 8, 9, 20, 55
 
 # Mesh
 NUM_CELL = 40
@@ -52,20 +52,15 @@ for setup in setups:
 	p = 1 # Constant(V.ufl_element().degree())
 	tau = compute_tau(W, h, p, epsilon, b)
 	uh = solve_supg(V, bcs, epsilon, b, c, f, tau)
-	tau2 = compute_sold_tau_codina(uh, 0.7, W, h, epsilon, b, c, f)
 
 	# Phi and dPhi Functions
 	def phi(tau):
 		global results
 		global phi_30
-		tau1 = tau[:len(tau)/2]
-		tau2 = tau[len(tau)/2:]
 		yh = Function(W)
-		yh.vector()[:] = tau1
-		yh2 = Function(W)
-		yh2.vector()[:] = tau2
-		error = value_of_ind_cross_sold(V, cut_b_elem_dofs, bcs,
-			epsilon, b, b_perp, c, f, yh, yh2)
+		yh.vector()[:] = tau
+		error = value_of_ind_cross(V, cut_b_elem_dofs, bcs,
+			epsilon, b, b_perp, c, f, yh)
 		t_length = pyt.time()-start
 		results.append([t_length,error])
 		if t_length < 30:
@@ -73,34 +68,22 @@ for setup in setups:
 		return error
 
 	def dPhi(tau):
-		tau1 = tau[:len(tau)/2]
-		tau2 = tau[len(tau)/2:]
 		yh = Function(W)
-		yh.vector()[:] = tau1
-		yh2 = Function(W)
-		yh2.vector()[:] = tau2
-		D_Phi_h_supg, D_Phi_h_sold = der_of_ind_cross_sold(V, W,
+		yh.vector()[:] = tau
+		D_Phi_h_supg = der_of_ind_cross(V, W,
 			cut_b_elem_dofs, bcs, bc_V_zero,
-			epsilon, b, b_perp, c, f, yh, yh2)
-		der1 = D_Phi_h_supg.vector().array()
-		der2 = D_Phi_h_sold.vector().array()
-		der = np.concatenate((der1, der2), axis=0)
+			epsilon, b, b_perp, c, f, yh)
+		der = D_Phi_h_supg.vector().array()
 		return der
 
 	# Minimization (Bounds Are Set Up First)
-	initial1 = tau.vector().array()
-	initial2 = 1.0 * tau2.vector().array()
-	initial = np.concatenate((initial1, initial2), axis=0)
+	initial = tau.vector().array()
 	
 	print(initial)
 	
-	lower_bound1 = 1 * initial1
-	upper_bound1 = 1 * initial1
-	lower_bound2 = 0 * initial2
-	upper_bound2 = 0 * initial2
-	yh_bounds1 = np.array([lower_bound1,upper_bound1])
-	yh_bounds2 = np.array([lower_bound2,upper_bound2])
-	yh_bounds = np.concatenate((yh_bounds1, yh_bounds2), axis=1)
+	lower_bound = 0 * initial
+	upper_bound = 5 * initial
+	yh_bounds = np.array([lower_bound,upper_bound])
 	print(yh_bounds)
 	yh_bounds = np.transpose(yh_bounds)
 
@@ -111,14 +94,10 @@ for setup in setups:
 	  options={'gtol': 1e-14, 'ftol': 1e-15, 'maxiter': 350, 'disp': True})
 
 	# Results Of Minimization
-	yh1 = Function(W)
-	yh2 = Function(W)
+	yh = Function(W)
 	tau = res.x
-	tau1 = tau[:len(tau)/2]
-	tau2 = tau[len(tau)/2:]
-	yh1.vector()[:] = tau1
-	yh2.vector()[:] = tau2
-	uh = solve_sold(V, bcs, epsilon, b, b_perp, c, f, yh1, yh2)
+	yh.vector()[:] = tau
+	uh = solve_supg(V, bcs, epsilon, b, c, f, yh)
 	res_phi = phi(tau)
 	
 	
@@ -179,8 +158,7 @@ for setup in setups:
 	                 'h': h_average,
 	                 'error_l2': l2_norm_of_error}
 	global_results.append(global_result)
-	rs.make_results(SC_EXAMPLE, NUM_CELL, V, W, uh, u_exact, yh1, res_phi, results)
-	rs.make_results_sold_par(SC_EXAMPLE, NUM_CELL, V, W, yh2)
+	rs.make_results(SC_EXAMPLE, NUM_CELL, V, W, uh, u_exact, yh, res_phi, results)
 
 # Global results
 rs.make_global_results(SC_EXAMPLE, global_results)

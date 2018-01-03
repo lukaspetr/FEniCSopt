@@ -33,7 +33,7 @@ def sc_setup(V, sc_example):
         else:
           value[0] = 0.
     u_exact = Function(V)
-    u_exact.interpolate(U_exact_8())
+    u_exact.interpolate(U_exact_8(degree=1))
 
   if sc_example == 9:
     # Boundary conditions
@@ -55,7 +55,7 @@ def sc_setup(V, sc_example):
     # Data
     epsilon = Constant(1.e-8)
     c = Constant(0.)
-    b = Expression(('-x[1]', 'x[0]'))
+    b = Expression(('-x[1]', 'x[0]'), degree=1)
     f = Constant(0.)
     class U_exact_9(Expression):
       def eval(self, value, x):
@@ -65,7 +65,7 @@ def sc_setup(V, sc_example):
         else:
           value[0] = 0.
     u_exact = Function(V)
-    u_exact.interpolate(U_exact_9())
+    u_exact.interpolate(U_exact_9(degree=1))
 
   elif sc_example == 20:
     # Boundary conditions
@@ -83,7 +83,7 @@ def sc_setup(V, sc_example):
         else:
           value[0] = -32.*(x[0]-0.5)
     f = Function(V)
-    f.interpolate(RhsFunction())
+    f.interpolate(RhsFunction(degree=1))
     class U_exact_20(Expression):
       def eval(self, value, x):
         if (abs(x[0]-0.5) > 0.25 or abs(x[1]-0.5) > 0.25):
@@ -91,7 +91,7 @@ def sc_setup(V, sc_example):
         else:
           value[0] = -16.*(x[0]-0.25)*(x[0]-0.75)
     u_exact = Function(V)
-    u_exact.interpolate(U_exact_20())
+    u_exact.interpolate(U_exact_20(degree=1))
 
   elif sc_example == 55:
     # Boundary conditions
@@ -110,6 +110,6 @@ def sc_setup(V, sc_example):
         else:
           value[0] = 0.
     u_exact = Function(V)
-    u_exact.interpolate(U_exact_55())
+    u_exact.interpolate(U_exact_55(degree=1))
 
   return bcs, epsilon, c, b, f, u_exact
