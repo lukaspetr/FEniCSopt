@@ -4,6 +4,48 @@ import math
 
 def sc_setup(V, sc_example):
 
+  if sc_example == 1:
+    # Boundary conditions
+    def right(x, on_boundary): return x[0] > (1. - DOLFIN_EPS)
+    def left(x, on_boundary): return x[0] < DOLFIN_EPS
+    def bottom_center(x, on_boundary):
+      return x[1] < DOLFIN_EPS and (x[0] > 1./3. - DOLFIN_EPS and x[0] < 2./3. + DOLFIN_EPS)
+    def bottom_l(x, on_boundary):
+      return x[1] < DOLFIN_EPS and (x[0] < 1./3. + DOLFIN_EPS)
+    def bottom_r(x, on_boundary):
+      return x[1] < DOLFIN_EPS and (x[0] > 2./3. - DOLFIN_EPS)
+    def top(x, on_boundary):
+      return x[1] > 1. - DOLFIN_EPS
+    g0 = Constant(0.)
+    g1 = Constant(1.)
+    gl = Expression('x[0]', degree=1)
+    gc = Expression('1./3.+x[0]', degree=1)
+    gr = Expression('1.-x[0]', degree=1)
+    bcl = DirichletBC(V, gl, bottom_l)
+    bcc = DirichletBC(V, gc, bottom_center)
+    bcr = DirichletBC(V, gr, bottom_r)
+    bc3 = DirichletBC(V, g0, top)
+    bc4 = DirichletBC(V, g0, right)
+    bcs = [bcl, bcc, bcr, bc3, bc4]
+    # Data
+    epsilon = Constant(1.e-8)
+    c = Constant(0.)
+    b = Expression(('-x[1]', 'x[0]'), degree=1)
+    f = Constant(0.)
+    class U_exact_1(Expression):
+      def eval(self, value, x):
+        r = x[0]*x[0]+x[1]*x[1]
+        if (r > 1./9. and r < 4./9.):
+          value[0] = 1. + sqrt(r)
+        elif (r < 1./9.):
+          value[0] = sqrt(r)
+        elif (r > 4./9. and r < 1.):
+          value[0] = 1. - sqrt(r)
+        else:
+          value[0] = 0.
+    u_exact = Function(V)
+    u_exact.interpolate(U_exact_1(degree=1))
+
   if sc_example == 8:
     # Boundary conditions
     def zero(x, on_boundary):

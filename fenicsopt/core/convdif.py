@@ -236,6 +236,17 @@ def solve_sold(V, bcs, epsilon, b, b_perp, c, f, tau, tau2):
   return uh
 
 ################################################################################
+# INDICATORS AND THEIR DERIVATIVES
+
+# Error Indicator For linear functions, I_h^lim
+def value_of_ind_lim(V, cut_b_elem_dofs, bcs, epsilon, b, b_perp, c, f, tau):
+	fcn_in_ind = lambda u:conditional(gt(u,1), 2., u**4-2*u**3-u**2+4*u)
+	v = TestFunction(V)
+	uh = solve_supg(V, bcs, epsilon, b, c, f, tau)
+	# Indicator
+	error = assemble(
+	  fcn_in_ind((-epsilon*div(grad(uh))+dot(b,grad(uh))+c*uh-f)**2)*cut_b_elem_dofs*dx)
+	return error
 
 # Error Indicator With Added Crosswind Derivative Control Term
 def value_of_ind_cross(V, cut_b_elem_dofs, bcs, epsilon, b, b_perp, c, f, tau):
@@ -270,6 +281,35 @@ def value_of_ind_cross_sold_iso(V, cut_b_elem_dofs, bcs, epsilon, b, b_perp, b_p
 	    + 1. * fcn_in_ind(abs(dot(b_perp,grad(uh)))+1e-17)
 	  )*cut_b_elem_dofs*dx)
 	return error
+
+# DERIVATIVES
+
+def der_of_ind_lim(V, W, cut_b_elem_dofs, bcs, bc_V_zero,
+		epsilon, b, b_perp, c, f, tau):
+	der_of_fcn_in_ind = lambda u:conditional(gt(u,1),0., 4.*u**3-6.*u**2-2.*u+4.)
+	psi = TrialFunction(V)
+	v = TestFunction(V)
+	w = TestFunction(W)
+	uh = solve_supg(V, bcs, epsilon, b, c, f, tau)
+	# Derivatives
+	derivatives_assemble = assemble(der_of_fcn_in_ind((-epsilon*div(grad(uh))+dot(b,grad(uh))+c*uh-f)**2)
+	  *(2*inner(
+	    (-epsilon*div(grad(uh))+dot(b,grad(uh))+c*uh-f),
+	    (-epsilon*div(grad(v ))+dot(b,grad(v ))+c*v))
+	  )*cut_b_elem_dofs*dx)
+	derivatives = Function(V, derivatives_assemble)
+	# Adjoint Approach To Compute Derivatives According To tau
+	a = (epsilon*dot(grad(v),grad(psi)) + psi*dot(b,grad(v)) + c*v*psi)*dx +\
+	    inner(-epsilon*div(grad(v))+dot(b,grad(v))+c*v,tau*dot(b,grad(psi)))*dx
+	L = derivatives*v*dx
+	psih = Function(V)
+	solve(a == L, psih, bc_V_zero)
+	# Compute D_Phi_h
+	D_Phi_h_ufl = (-inner(-epsilon*div(grad(uh))+dot(b,grad(uh))+c*uh,
+	  w*dot(b,grad(psih))) + inner(f,w*dot(b,grad(psih))))*dx
+	D_Phi_h_assemble = assemble(D_Phi_h_ufl)
+	D_Phi_h = Function(W, D_Phi_h_assemble)
+	return D_Phi_h
 
 def der_of_ind_cross(V, W, cut_b_elem_dofs, bcs, bc_V_zero,
 		epsilon, b, b_perp, c, f, tau):

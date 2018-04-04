@@ -58,10 +58,11 @@ setups = [
 ]
 '''
 setups = [
-	{ "V_TYPE": "CG", "V_DEGREE": 1, "W_TYPE": "DG", "W_DEGREE": 1 },
-	{ "V_TYPE": "CG", "V_DEGREE": 2, "W_TYPE": "DG", "W_DEGREE": 1 },
+	{ "V_TYPE": "CG", "V_DEGREE": 1, "W_TYPE": "DG", "W_DEGREE": 0 },
+	{ "V_TYPE": "CG", "V_DEGREE": 2, "W_TYPE": "DG", "W_DEGREE": 0 },
 ]
 '''
+
 global_results = []
 
 for setup in setups:
@@ -86,7 +87,7 @@ for setup in setups:
 		global phi_30
 		yh = Function(W)
 		yh.vector()[:] = tau
-		error = value_of_ind_cross(V, cut_b_elem_dofs, bcs, epsilon, b, b_perp, c, f, yh)
+		error = value_of_ind_lim(V, cut_b_elem_dofs, bcs, epsilon, b, b_perp, c, f, yh)
 		t_length = pyt.time()-start
 		results.append([t_length,error])
 		if t_length < 50:
@@ -96,14 +97,14 @@ for setup in setups:
 	def dPhi(tau):
 		yh = Function(W)
 		yh.vector()[:] = tau
-		D_Phi_h = der_of_ind_cross(V, W, cut_b_elem_dofs, bcs, bc_V_zero, epsilon, b, b_perp, c, f, yh)
+		D_Phi_h = der_of_ind_lim(V, W, cut_b_elem_dofs, bcs, bc_V_zero, epsilon, b, b_perp, c, f, yh)
 		der = D_Phi_h.vector().array()
 		return der
 
 	# Minimization (Bounds Are Set Up First)
 	initial = tau.vector().array()
 	lower_bound = 0 * initial
-	upper_bound = 2.0 * initial
+	upper_bound = 5.0 * initial
 	yh_bounds = np.array([lower_bound,upper_bound])
 	yh_bounds = np.transpose(yh_bounds)
 	results = []

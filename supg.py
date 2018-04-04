@@ -11,7 +11,7 @@ import fenicsopt.exports.results as rs
 
 ################################################################################
 
-SC_EXAMPLE = 9 # 8, 9, 20, 55
+SC_EXAMPLE = 1 # 8, 9, 20, 55
 
 # Mesh
 NUM_CELL = 33
@@ -26,7 +26,7 @@ def whole_boundary(x, on_boundary):
 
 cut_b_elem_dofs = get_boundary(mesh, DG0)
 
-setup = { "V_TYPE": "CG", "V_DEGREE": 1, "W_TYPE": "DG", "W_DEGREE": 1 }
+setup = { "V_TYPE": "CG", "V_DEGREE": 1, "W_TYPE": "DG", "W_DEGREE": 0 }
 
 # Function Spaces on the mesh
 V = FunctionSpace(mesh, setup["V_TYPE"], setup["V_DEGREE"])
@@ -42,6 +42,7 @@ b_perp = as_vector([( b[1]/sqrt(b[0]**2+b[1]**2)),
 # Basic Definitions
 p = 1 # Constant(V.ufl_element().degree())
 tau = compute_tau(W, h, p, epsilon, b)
+
 uh = solve_supg(V, bcs, epsilon, b, c, f, tau)
 
 one = project(1., V)
