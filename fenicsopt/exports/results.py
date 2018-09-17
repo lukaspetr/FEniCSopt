@@ -89,11 +89,12 @@ def make_results(SC_EXAMPLE, NUM_CELL, V, W, uh, u_exact, tau, res, results):
 
 	# Call Gnuplot And Other Programs
 	popen1 = os.popen('gnuplot ' + folder + hash + '.cmd\n convert '
-		+ folder + hash + '.tau.png -crop 1200x1050+250+150 '
+		+ folder + hash + '.tau.png -crop 1280x1090+200+150 '
 		+ folder + hash + '.tau.png\n', 'r')
-	popen4 = os.popen('epstool --copy --bbox ' + folder + hash + '.exact.eps '
+	# Currently, the following is not used/not working in some cases, non-critical
+	popen5 = os.popen('epstool --copy --bbox ' + folder + hash + '.exact.eps '
 		+ folder + hash + '.exact.cropped.eps\n', 'r')
-	popen3 = os.popen('epstool --copy --bbox ' + folder + hash + '.eps '
+	popen6 = os.popen('epstool --copy --bbox ' + folder + hash + '.eps '
 		+ folder + hash + '.cropped.eps\n', 'r')
 
 
@@ -132,7 +133,7 @@ def make_results_sold_par(SC_EXAMPLE, NUM_CELL, V, W, tau):
 
 	# Call Gnuplot And Other Programs
 	popen1 = os.popen('gnuplot ' + folder + hash + '.cmd\n convert '
-		+ folder + hash + '.tau2.png -crop 1200x1050+250+150 '
+		+ folder + hash + '.tau2.png -crop 1280x1090+200+150 '
 		+ folder + hash + '.tau2.png\n', 'r')
 
 
