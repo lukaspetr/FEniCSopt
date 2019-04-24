@@ -39,7 +39,7 @@ def sc_setup(V, sc_example):
           value[0] = sqrt(r)
         elif (r >= 1./9. and r <= 4./9.):
           value[0] = 1./3. + sqrt(r)
-        elif (r > 4./9. and r < 1.):
+        elif (r >= 4./9. and r < 1.):
           value[0] = 1. - sqrt(r)
         else:
           value[0] = 0.
@@ -92,7 +92,7 @@ def sc_setup(V, sc_example):
     c = Constant(0.)
     b = Expression(('-x[1]', 'x[0]'), degree=1)
     f = Constant(0.)
-    class U_exact_1(Expression):
+    class U_exact_1(UserExpression):
       def eval(self, value, x):
         r = x[0]*x[0]+x[1]*x[1]
         if (r < 1./36.):

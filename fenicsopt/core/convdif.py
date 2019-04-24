@@ -5,7 +5,7 @@ eta = lambda x: 2.*x*(1-x)
 
 # Make properly the function which cuts the dofs of boundary elements
 def get_boundary(mesh, DG0):
-	bdry_facets = FacetFunction('bool', mesh, False)
+	bdry_facets = MeshFunction('bool', mesh, 1)
 	DomainBoundary().mark(bdry_facets, True) # DomainBoundary() is a built-in func
 	dg0_dofmap = DG0.dofmap()
 	bdry_dofs = np.zeros(1, dtype=np.int32)
@@ -35,7 +35,7 @@ def compute_tau(W, h, p, epsilon, b):
 	# Tau Definition (Peclet Number And The Function Of The Pecl. Number Are Used)
 	peclet = project(bb**0.5*h/(2.*p*epsilon), W)
 	# Avoiding possible problems at machine prec. level, e.g. in ex. 9 at [0, 0]
-	peclet_array = np.absolute(peclet.vector().array())
+	peclet_array = np.absolute(peclet.vector().get_local())
 	function_of_peclet = np.subtract(coth(peclet_array),np.power(peclet_array,-1))
 	f_peclet = Function(W)
 	f_peclet.vector()[:] = function_of_peclet
@@ -247,9 +247,11 @@ def value_of_ind(V, cut_b_elem_dofs, bcs, epsilon, b, b_perp, c, f, tau):
 	  ((-epsilon*div(grad(uh))+dot(b,grad(uh))+c*uh-f)**2)*cut_b_elem_dofs*dx)
 	return error
 
-# Error Indicator For linear functions, I_h^lim
+# Error Indicator I_h^lim
 def value_of_ind_lim(V, cut_b_elem_dofs, bcs, epsilon, b, b_perp, c, f, tau):
-	fcn_in_ind = lambda u:conditional(gt(u,1), 2., u**4-2*u**3-u**2+4*u)
+	# The value of t0 might be carefully adjusted
+	t0 = 0.03
+	fcn_in_ind = lambda u:conditional(gt(u,t0), 1., 0.5*(u/t0)**4-(u/t0)**3-0.5*(u/t0)**2+2.*(u/t0))
 	v = TestFunction(V)
 	uh = solve_supg(V, bcs, epsilon, b, c, f, tau)
 	# Indicator
@@ -257,7 +259,7 @@ def value_of_ind_lim(V, cut_b_elem_dofs, bcs, epsilon, b, b_perp, c, f, tau):
 	  fcn_in_ind((-epsilon*div(grad(uh))+dot(b,grad(uh))+c*uh-f)**2)*cut_b_elem_dofs*dx)
 	return error
 
-# Error Indicator With Added Crosswind Derivative Control Term
+# Error Indicator With Added Crosswind Derivative Control Term I_h^cross
 def value_of_ind_cross(V, cut_b_elem_dofs, bcs, epsilon, b, b_perp, c, f, tau):
 	fcn_in_ind = lambda u:conditional(gt(u,1), sqrt(u), 2.5*u**2 - 1.5*u**3)
 	v = TestFunction(V)
@@ -320,7 +322,9 @@ def der_of_ind(V, W, cut_b_elem_dofs, bcs, bc_V_zero,
 
 def der_of_ind_lim(V, W, cut_b_elem_dofs, bcs, bc_V_zero,
 		epsilon, b, b_perp, c, f, tau):
-	der_of_fcn_in_ind = lambda u:conditional(gt(u,1),0., 4.*u**3-6.*u**2-2.*u+4.)
+	#The value of t0 might be carefully adjusted, to the same value like in the value_of_ind_lim
+	t0 = 0.03
+	der_of_fcn_in_ind = lambda u:conditional(gt(u,t0), 0., 2.*(1/t0)**4*u**3-3.*(1/t0)**3*u**2-(1/t0)**2*u+2.*(1/t0))
 	psi = TrialFunction(V)
 	v = TestFunction(V)
 	w = TestFunction(W)

@@ -13,23 +13,17 @@ def gnuplot_dg1(file, mesh, fun):
 	i = 0
 	for myCell in cells(mesh):
 		i += 1
-		myVertices = vertices(myCell)
-		it = iter(myVertices)
-		myVertex0 = it.next()
-		myVertex1 = it.next()
-		myVertex2 = it.next()
-		print >>file, '%e  %e  %e' % (myVertex0.x(0),myVertex0.x(1),\
-				                      fun(myVertex0.x(0),myVertex0.x(1)))
-		print >>file, '%e  %e  %e' % (myVertex1.x(0),myVertex1.x(1),\
-				                      fun(myVertex1.x(0),myVertex1.x(1)))
-		print >>file, '%e  %e  %e' % (myVertex2.x(0),myVertex2.x(1),\
-				                      fun(myVertex2.x(0),myVertex2.x(1)))
-		print >>file, '%e  %e  %e' % (myVertex0.x(0),myVertex0.x(1),\
-				                      fun(myVertex0.x(0),myVertex0.x(1)))
+		vs = []
+		for v in vertices(myCell):
+		    vs.append(v.midpoint())
+		
+		print('%e  %e  %e' % (vs[0].x(),vs[0].y(),fun(vs[0].x(),vs[0].y())), file=file)
+		print('%e  %e  %e' % (vs[1].x(),vs[1].y(),fun(vs[1].x(),vs[1].y())), file=file)
+		print('%e  %e  %e' % (vs[2].x(),vs[2].y(),fun(vs[2].x(),vs[2].y())), file=file)
+		print('%e  %e  %e' % (vs[0].x(),vs[0].y(),fun(vs[0].x(),vs[0].y())), file=file)
 		if (i == 1):
-			print >>file, '%e  %e  %e' % (myVertex0.x(0),myVertex0.x(1),\
-				                        fun(myVertex0.x(0),myVertex0.x(1)))
-		print >>file, ''
+			print('%e  %e  %e' % (vs[0].x(),vs[0].y(),fun(vs[0].x(),vs[0].y())), file=file)
+		print('', file=file)
 
 ################################################################################
 
@@ -42,8 +36,8 @@ def gnuplot_square_equidistant(file, N, fun):
 			y = j/N
 			p = Point(x,y)
 			f = fun(p)
-			print >>file, '%e  %e  %e' % (x,y,f)
-		print >>file, ''
+			print('%e  %e  %e' % (x,y,f), file=file)
+		print('', file=file)
 
 ################################################################################
 
@@ -52,6 +46,6 @@ def gnuplot_graph(file, data):
 	file = open(file, 'w+')
 	for point in data:
 		pprint.pprint(point)
-		print >>file, '%e  %e' % (point['position'], point['phi'])
-	print >>file, ''
+		print('%e  %e' % (point['position'], point['phi']), file=file)
+	print('', file=file)
 

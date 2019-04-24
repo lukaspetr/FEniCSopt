@@ -11,12 +11,12 @@ import fenicsopt.exports.results as rs
 
 ################################################################################
 
-SC_EXAMPLE = 2 # 1, 8, 9, 20, 55
-NUM_CELL = 40
+SC_EXAMPLE = 2 # 1, 2, 8, 9, 20, 55
+NUM_CELL = 10
 
 # Mesh
 mesh = UnitSquareMesh(NUM_CELL,NUM_CELL)
-h = CellSize(mesh)
+h = CellDiameter(mesh)
 cell_volume = CellVolume(mesh)
 DG0 = FunctionSpace(mesh, "DG", 0)
 
@@ -35,18 +35,23 @@ setups = [
 	{ "V_TYPE": "CG", "V_DEGREE": 3, "W_TYPE": "DG", "W_DEGREE": 0 },
 	{ "V_TYPE": "CG", "V_DEGREE": 3, "W_TYPE": "DG", "W_DEGREE": 1 },
 	{ "V_TYPE": "CG", "V_DEGREE": 3, "W_TYPE": "DG", "W_DEGREE": 2 },
-
+]
+'''
 	{ "V_TYPE": "CG", "V_DEGREE": 4, "W_TYPE": "DG", "W_DEGREE": 0 },
 	{ "V_TYPE": "CG", "V_DEGREE": 4, "W_TYPE": "DG", "W_DEGREE": 1 },
 	{ "V_TYPE": "CG", "V_DEGREE": 4, "W_TYPE": "DG", "W_DEGREE": 2 },
 	{ "V_TYPE": "CG", "V_DEGREE": 4, "W_TYPE": "DG", "W_DEGREE": 3 },
-
+]
+'''
+'''
 	{ "V_TYPE": "CG", "V_DEGREE": 5, "W_TYPE": "DG", "W_DEGREE": 0 },
 	{ "V_TYPE": "CG", "V_DEGREE": 5, "W_TYPE": "DG", "W_DEGREE": 1 },
 	{ "V_TYPE": "CG", "V_DEGREE": 5, "W_TYPE": "DG", "W_DEGREE": 2 },
 	{ "V_TYPE": "CG", "V_DEGREE": 5, "W_TYPE": "DG", "W_DEGREE": 3 },
 	{ "V_TYPE": "CG", "V_DEGREE": 5, "W_TYPE": "DG", "W_DEGREE": 4 },
+
 ]
+'''
 '''
 setups = [
 	{ "V_TYPE": "CG", "V_DEGREE": 1, "W_TYPE": "DG", "W_DEGREE": 0 },
@@ -90,11 +95,11 @@ for setup in setups:
 		yh = Function(W)
 		yh.vector()[:] = tau
 		D_Phi_h = der_of_ind_lim(V, W, cut_b_elem_dofs, bcs, bc_V_zero, epsilon, b, b_perp, c, f, yh)
-		der = D_Phi_h.vector().array()
+		der = D_Phi_h.vector().get_local()
 		return der
 
 	# Minimization (Bounds Are Set Up First)
-	initial = tau.vector().array()
+	initial = tau.vector().get_local()
 	lower_bound = 0 * initial
 	upper_bound = 5.0 * initial
 	yh_bounds = np.array([lower_bound,upper_bound])

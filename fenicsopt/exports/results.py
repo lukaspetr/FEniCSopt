@@ -1,7 +1,7 @@
 from __future__ import print_function
 import os
 from dolfin import *
-from gnuplot import *
+from .gnuplot import *
 import numpy as np
 from scipy.optimize import curve_fit
 
