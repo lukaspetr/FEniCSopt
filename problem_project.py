@@ -4,7 +4,7 @@ coth = lambda x: 1./np.tanh(x)
 
 # Mesh and Function Spaces
 mesh = UnitSquareMesh(10,10)
-h = CellSize(mesh)
+h = CellDiameter(mesh)
 V = FunctionSpace(mesh, "CG", 4)
 v = TestFunction(V)
 W = FunctionSpace(mesh, "DG", 6)
@@ -30,7 +30,7 @@ bcs = [bc0, bc1, bc4, bc3]
 # Data
 epsilon = Constant(1.e-8)
 c = Constant(0.)
-b = Expression(('-x[1]', 'x[0]'))
+b = Expression(('-x[1]', 'x[0]'), degree=1)
 f = Constant(0.)
 
 # Compute the Tau Parameter From SUPG Method
@@ -39,7 +39,7 @@ def compute_tau(W, h, p, epsilon, b):
 	# Tau Definition (Peclet Number And The Function Of The Pecl. Number Are Used)
 	peclet = project(bb**0.5*h/(2.*p*epsilon), W)
 	# Avoiding possible problems at machine prec. level, e.g. in ex. 9 at [0, 0]
-	peclet_array = np.absolute(peclet.vector().array())
+	peclet_array = np.absolute(peclet.vector().get_local())
 	function_of_peclet = np.subtract(coth(peclet_array),np.power(peclet_array,-1))
 	f_peclet = Function(W)
 	f_peclet.vector()[:] = function_of_peclet
@@ -68,5 +68,3 @@ plot(grad_uh_V)
 
 grad_uh = project(dot(grad(uh),grad(uh)), W)
 plot(grad_uh)
-
-interactive()

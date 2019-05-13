@@ -11,12 +11,12 @@ import fenicsopt.exports.results as rs
 
 ################################################################################
 
-SC_EXAMPLE = 9 # 8, 9, 20, 55
+SC_EXAMPLE = 8 # 8, 9, 20, 55
 
 # Mesh
-NUM_CELL = 33
+NUM_CELL = 32
 mesh = UnitSquareMesh(NUM_CELL,NUM_CELL)
-h = CellSize(mesh)
+h = CellDiameter(mesh)
 cell_volume = CellVolume(mesh)
 DG0 = FunctionSpace(mesh, "DG", 0)
 
@@ -27,9 +27,9 @@ def whole_boundary(x, on_boundary):
 cut_b_elem_dofs = get_boundary(mesh, DG0)
 
 setups = [
-	{ "V_TYPE": "CG", "V_DEGREE": 1, "W_TYPE": "DG", "W_DEGREE": 1 },
-	{ "V_TYPE": "CG", "V_DEGREE": 2, "W_TYPE": "DG", "W_DEGREE": 1 },
-	{ "V_TYPE": "CG", "V_DEGREE": 3, "W_TYPE": "DG", "W_DEGREE": 1 },
+	{ "V_TYPE": "CG", "V_DEGREE": 1, "W_TYPE": "DG", "W_DEGREE": 0 },
+	{ "V_TYPE": "CG", "V_DEGREE": 2, "W_TYPE": "DG", "W_DEGREE": 0 },
+	{ "V_TYPE": "CG", "V_DEGREE": 3, "W_TYPE": "DG", "W_DEGREE": 0 },
 ]
 
 global_results = []
@@ -68,7 +68,7 @@ for setup in setups:
 	                 'error_l2': l2_norm_of_error}
 	global_results.append(global_result)
 	results = []
-	rs.make_results(SC_EXAMPLE, NUM_CELL, V, W, uh, u_exact, tau, 1., results)
+	rs.make_results('RESULTS/' + str(SC_EXAMPLE) + 'SOLDSimple', NUM_CELL, V, W, uh, u_exact, tau, 1., results)
 
 # Global results
-rs.make_global_results(SC_EXAMPLE, global_results)
+rs.make_global_results('RESULTS/' + str(SC_EXAMPLE) + 'SOLDSimple', global_results)

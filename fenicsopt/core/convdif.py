@@ -63,7 +63,7 @@ def compute_sold_iso_b_parallel(mesh, V, B, uh, b):
   
   # H^1 Seminorm of uh
   grad_uh_squared = project(dot(grad(uh),grad(uh)), V_grad_squared)
-  grad_uh_squared_array = grad_uh_squared.vector().array()
+  grad_uh_squared_array = grad_uh_squared.vector().get_local()
   grad_uh_squared_array = np.clip(grad_uh_squared_array, 0.001, 100000.) # For computations
   grad_uh_squared.vector()[:] = grad_uh_squared_array
   b_parallel = project(dot(b,grad(uh))/grad_uh_squared*grad(uh), B)
@@ -77,7 +77,7 @@ def compute_sold_iso_sigma(mesh, V, B, W, uh, iso_u_0, h, b, b_parallel):
   
   # H^1 Seminorm of uh
   grad_uh_squared = project(dot(grad(uh),grad(uh)), V_grad_squared)
-  grad_uh_squared_array = grad_uh_squared.vector().array()
+  grad_uh_squared_array = grad_uh_squared.vector().get_local()
   grad_uh_squared_array = np.clip(grad_uh_squared_array, 0.001, 100000.) # For computations
   grad_uh_squared_array = np.sqrt(grad_uh_squared_array)
   grad_uh_squared.vector()[:] = grad_uh_squared_array
@@ -85,7 +85,7 @@ def compute_sold_iso_sigma(mesh, V, B, W, uh, iso_u_0, h, b, b_parallel):
   
   # L^1 norm of b_parallel
   b_parallel_norm_squared = project(dot(b_parallel,b_parallel), V_grad_squared)
-  b_parallel_norm_squared_array = b_parallel_norm_squared.vector().array()
+  b_parallel_norm_squared_array = b_parallel_norm_squared.vector().get_local()
   b_parallel_norm_squared_array = np.clip(b_parallel_norm_squared_array, 0.001, 100000.) # For computations
   b_parallel_norm_squared_array = np.sqrt(b_parallel_norm_squared_array)
   b_parallel_norm_squared.vector()[:] = b_parallel_norm_squared_array
@@ -93,7 +93,7 @@ def compute_sold_iso_sigma(mesh, V, B, W, uh, iso_u_0, h, b, b_parallel):
   
   # L^1 norm of b
   b_norm_squared = project(dot(b,b), V_grad_squared)
-  b_norm_squared_array = b_norm_squared.vector().array()
+  b_norm_squared_array = b_norm_squared.vector().get_local()
   b_norm_squared_array = np.clip(b_norm_squared_array, 0.001, 100000.) # For computations
   b_norm_squared_array = np.sqrt(b_norm_squared_array)
   b_norm_squared.vector()[:] = b_norm_squared_array
@@ -101,12 +101,12 @@ def compute_sold_iso_sigma(mesh, V, B, W, uh, iso_u_0, h, b, b_parallel):
   
   # Eta
   eta_of_bs = project(eta(b_parallel_norm/b_norm), W)
-  eta_of_bs_array = eta_of_bs.vector().array()
+  eta_of_bs_array = eta_of_bs.vector().get_local()
   eta_of_bs_array = np.clip(eta_of_bs_array, 0., 100000.) # For computations
   eta_of_bs.vector()[:] = eta_of_bs_array
   
   sigma = project(h*h*eta_of_bs*grad_uh/2./b_parallel_norm/iso_u_0, W)
-  sigma_array = sigma.vector().array()
+  sigma_array = sigma.vector().get_local()
   sigma_array = np.clip(sigma_array, 0., 100000.) # For computations
   sigma.vector()[:] = sigma_array
   return sigma
@@ -158,7 +158,7 @@ def compute_sold_tau_codina(uh, codina_c, W, h, epsilon, b, c, f):
 	
 	plot(grad_uh)
 	
-	grad_uh_array = grad_uh.vector().array()
+	grad_uh_array = grad_uh.vector().get_local()
 	grad_uh_array = np.clip(grad_uh_array, 1., 1000.) # For future computations...
 	grad_uh_array = np.sqrt(grad_uh_array)
 	grad_uh.vector()[:] = grad_uh_array
@@ -167,7 +167,7 @@ def compute_sold_tau_codina(uh, codina_c, W, h, epsilon, b, c, f):
 	res = project(
 		(-epsilon*div(grad(uh))+dot(b,grad(uh))+c*uh-f)**2, W
 	)
-	res_array = res.vector().array()
+	res_array = res.vector().get_local()
 	res_array = np.clip(res_array, 0., 100.)
 	res_array = np.sqrt(res_array)
 	res.vector()[:] = res_array
@@ -180,7 +180,7 @@ def compute_sold_tau_codina(uh, codina_c, W, h, epsilon, b, c, f):
 	q_k = project(
 		res/grad_uh, W
 	)
-	q_k_array = q_k.vector().array()
+	q_k_array = q_k.vector().get_local()
 	q_k_array = np.clip(q_k_array, l_b_const, 100.)
 	q_k.vector()[:] = q_k_array
 
@@ -294,6 +294,9 @@ def value_of_ind_cross_sold_iso(V, cut_b_elem_dofs, bcs, epsilon, b, b_perp, b_p
 	return error
 
 # DERIVATIVES
+
+# There is a problem with the missing sign function in the UFL version, redefining it
+sign = lambda u:conditional(gt(u,0),1,-1)
 
 def der_of_ind(V, W, cut_b_elem_dofs, bcs, bc_V_zero,
 		epsilon, b, b_perp, c, f, tau):

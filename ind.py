@@ -16,7 +16,7 @@ NUM_CELL = 24
 
 # Mesh
 mesh = UnitSquareMesh(NUM_CELL,NUM_CELL)
-h = CellSize(mesh)
+h = CellDiameter(mesh)
 cell_volume = CellVolume(mesh)
 DG0 = FunctionSpace(mesh, "DG", 0)
 
@@ -90,11 +90,11 @@ for setup in setups:
 		yh = Function(W)
 		yh.vector()[:] = tau
 		D_Phi_h = der_of_ind(V, W, cut_b_elem_dofs, bcs, bc_V_zero, epsilon, b, b_perp, c, f, yh)
-		der = D_Phi_h.vector().array()
+		der = D_Phi_h.vector().get_local()
 		return der
 
 	# Minimization (Bounds Are Set Up First)
-	initial = tau.vector().array()
+	initial = tau.vector().get_local()
 	lower_bound = 0 * initial
 	upper_bound = 5.0 * initial
 	yh_bounds = np.array([lower_bound,upper_bound])

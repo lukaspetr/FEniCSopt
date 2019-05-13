@@ -32,7 +32,7 @@ def sc_setup(V, sc_example):
     c = Constant(0.)
     b = Expression(('-x[1]', 'x[0]'), degree=1)
     f = Constant(0.)
-    class U_exact_1(Expression):
+    class U_exact_1(UserExpression):
       def eval(self, value, x):
         r = x[0]*x[0]+x[1]*x[1]
         if (r < 1./9.):
@@ -129,7 +129,7 @@ def sc_setup(V, sc_example):
     theta = -math.pi/3.
     b = Constant((math.cos(theta), math.sin(theta)))
     f = Constant(0.)
-    class U_exact_8(Expression):
+    class U_exact_8(UserExpression):
       def eval(self, value, x):
         if (x[0] > 0.0001 and x[0] < 0.9999 and x[1] > 0.0001 and x[1] < 0.9999):
           if (x[1] > (0.7 + x[0]*math.sin(theta)/math.cos(theta))):
@@ -165,7 +165,7 @@ def sc_setup(V, sc_example):
     c = Constant(0.)
     b = Expression(('-x[1]', 'x[0]'), degree=1)
     f = Constant(0.)
-    class U_exact_9(Expression):
+    class U_exact_9(UserExpression):
       def eval(self, value, x):
         r = x[0]*x[0]+x[1]*x[1]
         if (r > 1./9. and r < 4./9.):
@@ -184,7 +184,7 @@ def sc_setup(V, sc_example):
     epsilon = Constant(1.e-8)
     c = Constant(0.)
     b = Constant((1., 0.))
-    class RhsFunction(Expression):
+    class RhsFunction(UserExpression):
       def eval(self, value, x):
         if (abs(x[0]-0.5) > 0.25 or abs(x[1]-0.5) > 0.25):
           value[0] = 0.
@@ -192,7 +192,7 @@ def sc_setup(V, sc_example):
           value[0] = -32.*(x[0]-0.5)
     f = Function(V)
     f.interpolate(RhsFunction(degree=1))
-    class U_exact_20(Expression):
+    class U_exact_20(UserExpression):
       def eval(self, value, x):
         if (abs(x[0]-0.5) > 0.25 or abs(x[1]-0.5) > 0.25):
           value[0] = 0.
@@ -211,7 +211,7 @@ def sc_setup(V, sc_example):
     c = Constant(0.)
     b = Constant((1., 0.))
     f = Constant(1.)
-    class U_exact_55(Expression):
+    class U_exact_55(UserExpression):
       def eval(self, value, x):
         if (x[0] > 1.e-6 and x[0] < 0.999999 and x[1] > 1.e-6 and x[1] < 0.999999):
           value[0] = x[0]

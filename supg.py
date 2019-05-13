@@ -16,7 +16,7 @@ SC_EXAMPLE = 2 # 8, 9, 20, 55
 # Mesh
 NUM_CELL = 33
 mesh = UnitSquareMesh(NUM_CELL,NUM_CELL)
-h = CellSize(mesh)
+h = CellDiameter(mesh)
 cell_volume = CellVolume(mesh)
 DG0 = FunctionSpace(mesh, "DG", 0)
 
@@ -55,5 +55,4 @@ l2_norm_of_error = norm(error_function, 'l2')
 plot(uh)
 
 results = []
-rs.make_results(SC_EXAMPLE, NUM_CELL, V, W, uh, u_exact, tau, 1., results)
-
+rs.make_results('RESULTS/' + str(SC_EXAMPLE) + 'SUPG', NUM_CELL, V, W, uh, u_exact, tau, 1., results)

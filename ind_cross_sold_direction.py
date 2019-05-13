@@ -16,7 +16,7 @@ SC_EXAMPLE = 20 # 8, 9, 20, 55
 # Mesh
 NUM_CELL = 40
 mesh = UnitSquareMesh(NUM_CELL,NUM_CELL)
-h = CellSize(mesh)
+h = CellDiameter(mesh)
 cell_volume = CellVolume(mesh)
 DG0 = FunctionSpace(mesh, "DG", 0)
 
@@ -82,14 +82,14 @@ for setup in setups:
 		D_Phi_h_supg, D_Phi_h_sold = der_of_ind_cross_sold(V, W,
 			cut_b_elem_dofs, bcs, bc_V_zero,
 			epsilon, b, b_perp, c, f, yh, yh2)
-		der1 = D_Phi_h_supg.vector().array()
-		der2 = D_Phi_h_sold.vector().array()
+		der1 = D_Phi_h_supg.vector().get_local()
+		der2 = D_Phi_h_sold.vector().get_local()
 		der = np.concatenate((der1, der2), axis=0)
 		return der
 
 	# Minimization (Bounds Are Set Up First)
-	initial1 = tau.vector().array()
-	initial2 = 1.0 * tau2.vector().array()
+	initial1 = tau.vector().get_local()
+	initial2 = 1.0 * tau2.vector().get_local()
 	initial = np.concatenate((initial1, initial2), axis=0)
 	
 	print(initial)
@@ -161,7 +161,7 @@ for setup in setups:
 	  data.append(point)
 	  step += 1
 	
-	rs.make_line_results(SC_EXAMPLE, V, W, data)
+	rs.make_line_results('RESULTS/' + str(SC_EXAMPLE) + 'indCrossSOLDDirection', V, W, data)
 	
 	pprint.pprint(data)
 	
@@ -179,8 +179,8 @@ for setup in setups:
 	                 'h': h_average,
 	                 'error_l2': l2_norm_of_error}
 	global_results.append(global_result)
-	rs.make_results(SC_EXAMPLE, NUM_CELL, V, W, uh, u_exact, yh1, res_phi, results)
-	rs.make_results_sold_par(SC_EXAMPLE, NUM_CELL, V, W, yh2)
+	rs.make_results('RESULTS/' + str(SC_EXAMPLE) + 'indCrossSOLDDirection', NUM_CELL, V, W, uh, u_exact, yh1, res_phi, results)
+	rs.make_results_sold_par('RESULTS/' + str(SC_EXAMPLE) + 'indCrossSOLDDirection', NUM_CELL, V, W, yh2)
 
 # Global results
-rs.make_global_results(SC_EXAMPLE, global_results)
+rs.make_global_results('RESULTS/' + str(SC_EXAMPLE) + 'indCrossSOLDDirection', global_results)

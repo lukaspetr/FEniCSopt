@@ -20,7 +20,7 @@ global_results = []
 for NUM_CELL in range(32, 34, 1):
   # Mesh
   mesh = UnitSquareMesh(NUM_CELL,NUM_CELL)
-  h = CellSize(mesh)
+  h = CellDiameter(mesh)
   cell_volume = CellVolume(mesh)
   DG0 = FunctionSpace(mesh, "DG", 0)
 
@@ -88,15 +88,15 @@ for NUM_CELL in range(32, 34, 1):
     D_Phi_h_supg, D_Phi_h_sold = der_of_ind_cross_sold_iso(V, W,
 	    cut_b_elem_dofs, bcs, bc_V_zero,
 	    epsilon, b, b_perp, b_parallel, c, f, yh, yh2)
-    der1 = D_Phi_h_supg.vector().array()
-    der2 = D_Phi_h_sold.vector().array()
-    der = np.concatenate((der1, der2), axis=1)
+    der1 = D_Phi_h_supg.vector().get_local()
+    der2 = D_Phi_h_sold.vector().get_local()
+    der = np.concatenate((der1, der2), axis=0)
     return der
 
   # Minimization (Bounds Are Set Up First)
-  initial1 = tau.vector().array()
-  initial2 = 0.9 * sigma.vector().array()
-  initial = np.concatenate((initial1, initial2), axis=1)
+  initial1 = tau.vector().get_local()
+  initial2 = 0.9 * sigma.vector().get_local()
+  initial = np.concatenate((initial1, initial2), axis=0)
   lower_bound1 = 0.0 * initial1
   upper_bound1 = 2.0 * initial1
   lower_bound2 = 0.0 * initial2
@@ -140,8 +140,7 @@ for NUM_CELL in range(32, 34, 1):
                    'h': h_average,
                    'error_l2': norm_of_error}
   global_results.append(global_result)
-  rs.make_results_h(SC_EXAMPLE, NUM_CELL, V, W, uh, u_exact, yh1, res_phi)
+  rs.make_results_h('RESULTS/' + str(SC_EXAMPLE) + 'indCrossSOLDIsoH', NUM_CELL, V, W, uh, u_exact, yh1, res_phi)
 
 # Global results
-rs.make_global_results_h(SC_EXAMPLE, global_results)
-
+rs.make_global_results_h('RESULTS/' + str(SC_EXAMPLE) + 'indCrossSOLDIsoH', global_results)
