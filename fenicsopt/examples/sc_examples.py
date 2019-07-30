@@ -112,6 +112,113 @@ def sc_setup(V, sc_example):
     u_exact = Function(V)
     u_exact.interpolate(U_exact_1(degree=1))
 
+  if sc_example == 3:
+    # Boundary conditions
+    def right(x, on_boundary): return x[0] > (1. - DOLFIN_EPS)
+    def left(x, on_boundary): return x[0] < DOLFIN_EPS
+    def top(x, on_boundary): return x[1] > (1. - DOLFIN_EPS)
+
+    def bottom_1(x, on_boundary):
+      return x[1] < DOLFIN_EPS and (x[0] < 1./6. + DOLFIN_EPS)
+    def bottom_2(x, on_boundary):
+      return x[1] < DOLFIN_EPS and (x[0] > 1./6. - DOLFIN_EPS and x[0] < 2./3. + DOLFIN_EPS)
+    def bottom_3(x, on_boundary):
+      return x[1] < DOLFIN_EPS and (x[0] > 2./3. - DOLFIN_EPS and x[0] < 5./6. + DOLFIN_EPS)
+    def bottom_4(x, on_boundary):
+      return x[1] < DOLFIN_EPS and (x[0] > 5./6. - DOLFIN_EPS)
+
+    g0 = Constant(0.)
+    g1 = Constant(1.)
+
+    b2 = Expression('sqrt(-7./36.-x[0]*x[0]+4./3.*x[0])', degree=2)
+    b3 = Expression('2.5-3.*x[0]', degree=1)
+
+    bcb1 = DirichletBC(V, g0, bottom_1)
+    bcb2 = DirichletBC(V, b2, bottom_2)
+    bcb3 = DirichletBC(V, g0, bottom_3)
+    bcb4 = DirichletBC(V, g0, bottom_4)
+
+    bc3 = DirichletBC(V, g0, top)
+    bc4 = DirichletBC(V, g0, right)
+
+    bcs = [bcb1, bcb2, bcb3, bcb4, bc3, bc4]
+
+    # Data
+    epsilon = Constant(1.e-8)
+    c = Constant(0.)
+    b = Expression(('-x[1]', 'x[0]'), degree=1)
+    f = Constant(0.)
+    class U_exact_1(UserExpression):
+      def eval(self, value, x):
+        r = x[0]*x[0]+x[1]*x[1]
+        if (r < 1./36.):
+          value[0] = 0.
+        elif (r >= 1./36. and r < 4./9.):
+          value[0] = sqrt(-7./36.-r+4./3.*sqrt(r))
+        elif (r >= 16./36. and r < 25./36.):
+          value[0] = 0.
+        elif (r >= 25./36. and r < 1.):
+          value[0] = 0.
+        else:
+          value[0] = 0.
+    u_exact = Function(V)
+    u_exact.interpolate(U_exact_1(degree=1))
+
+  if sc_example == 4:
+    # Boundary conditions
+    def right(x, on_boundary): return x[0] > (1. - DOLFIN_EPS)
+    def left(x, on_boundary): return x[0] < DOLFIN_EPS
+    def top(x, on_boundary): return x[1] > (1. - DOLFIN_EPS)
+
+    def bottom_1(x, on_boundary):
+      return x[1] < DOLFIN_EPS and (x[0] < 1./6. + DOLFIN_EPS)
+    def bottom_2(x, on_boundary):
+      return x[1] < DOLFIN_EPS and (x[0] > 1./6. - DOLFIN_EPS and x[0] < 2./3. + DOLFIN_EPS)
+    def bottom_3(x, on_boundary):
+      return x[1] < DOLFIN_EPS and (x[0] > 2./3. - DOLFIN_EPS and x[0] < 5./6. + DOLFIN_EPS)
+    def bottom_4(x, on_boundary):
+      return x[1] < DOLFIN_EPS and (x[0] > 5./6. - DOLFIN_EPS)
+
+    g0 = Constant(0.)
+    g1 = Constant(1.)
+
+    b2 = Expression('sqrt(-7./36.-x[0]*x[0]+4./3.*x[0])', degree=2)
+    b3 = Expression('2.5-3.*x[0]', degree=1)
+
+    bcb1 = DirichletBC(V, g0, bottom_1)
+    bcb2 = DirichletBC(V, b2, bottom_2)
+    bcb3 = DirichletBC(V, g0, bottom_3)
+    bcb4 = DirichletBC(V, g0, bottom_4)
+
+    bc3 = DirichletBC(V, g0, top)
+    bc4 = DirichletBC(V, g0, right)
+
+    bcs = [bcb1, bcb2, bcb3, bcb4, bc3, bc4]
+
+    # Data
+    epsilon = Constant(1.e-8)
+    c = Constant(0.)
+    b = Expression(('0', '1'), degree=1)
+    f = Constant(0.)
+    class U_exact_1(UserExpression):
+      def eval(self, value, x):
+        if x[1] < (1-DOLFIN_EPS):
+          r = x[0]*x[0]
+          if (r < 1./36.):
+            value[0] = 0.
+          elif (r >= 1./36. and r < 4./9.):
+            value[0] = sqrt(-7./36.-r+4./3.*sqrt(r))
+          elif (r >= 16./36. and r < 25./36.):
+            value[0] = 0.
+          elif (r >= 25./36. and r < 1.):
+            value[0] = 0.
+          else:
+            value[0] = 0.
+        else:
+          value[0] = 0.
+    u_exact = Function(V)
+    u_exact.interpolate(U_exact_1(degree=1))
+
   if sc_example == 8:
     # Boundary conditions
     def zero(x, on_boundary):

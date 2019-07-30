@@ -11,8 +11,8 @@ import fenicsopt.exports.results as rs
 
 ################################################################################
 
-SC_EXAMPLE = 2 # 1, 2, 8, 9, 20, 55
-NUM_CELL = 10
+SC_EXAMPLE = 3 # 1, 2, 8, 9, 20, 55
+NUM_CELL = 12
 
 # Mesh
 mesh = UnitSquareMesh(NUM_CELL,NUM_CELL)
@@ -35,23 +35,18 @@ setups = [
 	{ "V_TYPE": "CG", "V_DEGREE": 3, "W_TYPE": "DG", "W_DEGREE": 0 },
 	{ "V_TYPE": "CG", "V_DEGREE": 3, "W_TYPE": "DG", "W_DEGREE": 1 },
 	{ "V_TYPE": "CG", "V_DEGREE": 3, "W_TYPE": "DG", "W_DEGREE": 2 },
-]
-'''
+
 	{ "V_TYPE": "CG", "V_DEGREE": 4, "W_TYPE": "DG", "W_DEGREE": 0 },
 	{ "V_TYPE": "CG", "V_DEGREE": 4, "W_TYPE": "DG", "W_DEGREE": 1 },
 	{ "V_TYPE": "CG", "V_DEGREE": 4, "W_TYPE": "DG", "W_DEGREE": 2 },
 	{ "V_TYPE": "CG", "V_DEGREE": 4, "W_TYPE": "DG", "W_DEGREE": 3 },
-]
-'''
-'''
+
 	{ "V_TYPE": "CG", "V_DEGREE": 5, "W_TYPE": "DG", "W_DEGREE": 0 },
 	{ "V_TYPE": "CG", "V_DEGREE": 5, "W_TYPE": "DG", "W_DEGREE": 1 },
 	{ "V_TYPE": "CG", "V_DEGREE": 5, "W_TYPE": "DG", "W_DEGREE": 2 },
 	{ "V_TYPE": "CG", "V_DEGREE": 5, "W_TYPE": "DG", "W_DEGREE": 3 },
 	{ "V_TYPE": "CG", "V_DEGREE": 5, "W_TYPE": "DG", "W_DEGREE": 4 },
-
 ]
-'''
 '''
 setups = [
 	{ "V_TYPE": "CG", "V_DEGREE": 1, "W_TYPE": "DG", "W_DEGREE": 0 },
