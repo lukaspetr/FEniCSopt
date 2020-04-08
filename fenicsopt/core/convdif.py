@@ -1,7 +1,9 @@
 from dolfin import *
 import numpy as np
+
 coth = lambda x: 1./np.tanh(x)
 eta = lambda x: 2.*x*(1-x)
+constant_t0 = 0.02
 
 # Make properly the function which cuts the dofs of boundary elements
 def get_boundary(mesh, DG0):
@@ -140,7 +142,7 @@ def iterate_sold_iso(mesh, V, B, W, bcs, iso_u_0, h, epsilon, b, c, f, tau, uh0,
   sigma = compute_sold_iso_sigma(mesh, V, B, W, uh, iso_u_0, h, b, b_parallel)
   residue = residue_sold_iso(V, uh, epsilon, b, b_parallel, c, f, tau, sigma)
   residue_old = 2.0 * residue
-  while residue/residue_old < 0.99:
+  while residue/residue_old < 0.999:
     b_parallel = compute_sold_iso_b_parallel(mesh, V, B, uh, b)
     sigma = compute_sold_iso_sigma(mesh, V, B, W, uh, iso_u_0, h, b, b_parallel)
     residue_old = residue
@@ -148,6 +150,75 @@ def iterate_sold_iso(mesh, V, B, W, bcs, iso_u_0, h, epsilon, b, c, f, tau, uh0,
     uh = solve_sold_iso(V, bcs, epsilon, b, b_parallel, c, f, tau, sigma)
     print(residue)
   return sigma, b_parallel
+
+################################################################################
+
+# New additions from Knobloch and John (2011):
+
+# The parameter denoted as \tilde{\varepsilon} originally
+def compute_sold_cross_sigma(mesh, h, V, W, bcs, epsilon, b, b_perp, c, f, uh):
+  degree = V.ufl_element().degree()
+  family = V.ufl_element()._short_name
+  V_grad_norm = FunctionSpace(mesh, "DG", degree-1)
+  V_grad_squared = FunctionSpace(mesh, "DG", 2*(degree-1))
+  
+  # H^1 Seminorm of uh
+  grad_uh_squared = project(dot(grad(uh),grad(uh)), V_grad_squared)
+  grad_uh_squared_array = grad_uh_squared.vector().get_local()
+  grad_uh_squared_array = np.clip(grad_uh_squared_array, 0.0001, 100000.) # For computations
+  grad_uh_squared_array = np.sqrt(grad_uh_squared_array)
+  grad_uh_squared.vector()[:] = grad_uh_squared_array
+  grad_uh = project(grad_uh_squared, V_grad_norm)
+  
+  # Residue
+  res = project(-epsilon*div(grad(uh))+dot(b,grad(uh))+c*uh-f, V_grad_squared)
+  res_array = res.vector().get_local()
+  res_array = np.absolute(res_array)
+  res.vector()[:] = res_array
+  
+  # Final computation
+  sigma = project(0.7*h*res/2./grad_uh, W)
+  sigma_array = sigma.vector().get_local()
+  sigma_array = np.clip(sigma_array, 0., 100000.) # For computations
+  sigma.vector()[:] = sigma_array
+  return sigma
+
+# SOLD method - JK Enumath 2011, instead of \tilde{\varepsilon} we use sigma here
+def solve_sold_cross(V, bcs, epsilon, b, b_perp, c, f, tau, sigma):
+  u = TrialFunction(V)
+  v = TestFunction(V)
+  a = (epsilon*dot(grad(u),grad(v)) + v*dot(b,grad(u)) + c*u*v)*dx +\
+      inner(-epsilon*div(grad(u))+dot(b,grad(u))+c*u,tau*dot(b,grad(v)))*dx +\
+      inner(dot(b_perp,grad(u)),sigma*dot(b_perp,grad(v)))*dx
+  L = f*v*dx + inner(f,tau*dot(b,grad(v)))*dx
+  uh = Function(V)
+  solve(a == L, uh, bcs)
+  return uh
+
+# SOLD method - isotropic diffusion - compute the residue
+def residue_sold_cross(V, uh, epsilon, b, b_perp, c, f, tau, sigma):
+  v = TestFunction(V)
+  a = Function(V)
+  a.vector()[:] = assemble((epsilon*dot(grad(uh),grad(v)) + v*dot(b,grad(uh)) + c*uh*v)*dx +\
+      inner(-epsilon*div(grad(uh))+dot(b,grad(uh))+c*uh,tau*dot(b,grad(v)))*dx +\
+      inner(dot(b_perp,grad(uh)),sigma*dot(b_perp,grad(v)))*dx -\
+      f*v*dx - inner(f,tau*dot(b,grad(v)))*dx)
+  return norm(a)
+
+# Iteration, returns sigma
+def iterate_sold_cross(mesh, h, V, W, bcs, epsilon, b, b_perp, c, f, tau, uh0, tol):
+  uh = uh0
+  sigma = compute_sold_cross_sigma(mesh, h, V, W, bcs, epsilon, b, b_perp, c, f, uh)
+  residue = 2 * residue_sold_cross(V, uh, epsilon, b, b_perp, c, f, tau, sigma)
+  residue_old = 1e10
+  while residue/residue_old < tol:
+    sigma = compute_sold_cross_sigma(mesh, h, V, W, bcs, epsilon, b, b_perp, c, f, uh)
+    residue_old = residue
+    residue = residue_sold_cross(V, uh, epsilon, b, b_perp, c, f, tau, sigma)
+    uh = solve_sold_cross(V, bcs, epsilon, b, b_perp, c, f, tau, sigma)
+    print(residue_old)
+    print(residue)
+  return sigma
 
 ################################################################################
 
@@ -236,6 +307,9 @@ def solve_sold(V, bcs, epsilon, b, b_perp, c, f, tau, tau2):
   return uh
 
 ################################################################################
+################################################################################
+################################################################################
+
 # INDICATORS AND THEIR DERIVATIVES
 
 # Error Indicator
@@ -250,7 +324,7 @@ def value_of_ind(V, cut_b_elem_dofs, bcs, epsilon, b, b_perp, c, f, tau):
 # Error Indicator I_h^lim
 def value_of_ind_lim(V, cut_b_elem_dofs, bcs, epsilon, b, b_perp, c, f, tau):
 	# The value of t0 might be carefully adjusted
-	t0 = 0.03
+	t0 = constant_t0
 	fcn_in_ind = lambda u:conditional(gt(u,t0), 1., 0.5*(u/t0)**4-(u/t0)**3-0.5*(u/t0)**2+2.*(u/t0))
 	v = TestFunction(V)
 	uh = solve_supg(V, bcs, epsilon, b, c, f, tau)
@@ -293,6 +367,21 @@ def value_of_ind_cross_sold_iso(V, cut_b_elem_dofs, bcs, epsilon, b, b_perp, b_p
 	  )*cut_b_elem_dofs*dx)
 	return error
 
+def value_of_ind_lim_sold_cross(V, cut_b_elem_dofs, bcs, epsilon, b, b_perp, c, f, tau, sigma):
+	t0 = constant_t0
+	fcn_in_ind = lambda u:conditional(gt(u,t0), 1., 0.5*(u/t0)**4-(u/t0)**3-0.5*(u/t0)**2+2.*(u/t0))
+	v = TestFunction(V)
+	uh = solve_sold_cross(V, bcs, epsilon, b, b_perp, c, f, tau, sigma)
+	# Indicator
+	error = assemble(
+	  fcn_in_ind((-epsilon*div(grad(uh))+dot(b,grad(uh))+c*uh-f)**2)*cut_b_elem_dofs*dx)
+	return error
+
+
+
+
+
+
 # DERIVATIVES
 
 # There is a problem with the missing sign function in the UFL version, redefining it
@@ -326,7 +415,7 @@ def der_of_ind(V, W, cut_b_elem_dofs, bcs, bc_V_zero,
 def der_of_ind_lim(V, W, cut_b_elem_dofs, bcs, bc_V_zero,
 		epsilon, b, b_perp, c, f, tau):
 	#The value of t0 might be carefully adjusted, to the same value like in the value_of_ind_lim
-	t0 = 0.03
+	t0 = constant_t0
 	der_of_fcn_in_ind = lambda u:conditional(gt(u,t0), 0., 2.*(1/t0)**4*u**3-3.*(1/t0)**3*u**2-(1/t0)**2*u+2.*(1/t0))
 	psi = TrialFunction(V)
 	v = TestFunction(V)
@@ -384,7 +473,6 @@ def der_of_ind_cross_sold(V, W, cut_b_elem_dofs, bcs, bc_V_zero,
 		epsilon, b, b_perp, c, f, tau, tau2):
 	der_of_fcn_in_ind = lambda u:conditional(gt(u,1),0.5/sqrt(u),5.*u-4.5*u**2)
 	psi = TrialFunction(V)
-	psi2 = TrialFunction(V)
 	v = TestFunction(V)
 	w = TestFunction(W)
 	uh = solve_sold(V, bcs, epsilon, b, b_perp, c, f, tau, tau2)
@@ -419,7 +507,6 @@ def der_of_ind_cross_sold_iso(V, W, cut_b_elem_dofs, bcs, bc_V_zero,
 		epsilon, b, b_perp, b_parallel, c, f, tau, sigma):
 	der_of_fcn_in_ind = lambda u:conditional(gt(u,1),0.5/sqrt(u),5.*u-4.5*u**2)
 	psi = TrialFunction(V)
-	psi2 = TrialFunction(V)
 	v = TestFunction(V)
 	w = TestFunction(W)
 	uh = solve_sold_iso(V, bcs, epsilon, b, b_parallel, c, f, tau, sigma)
@@ -446,6 +533,42 @@ def der_of_ind_cross_sold_iso(V, W, cut_b_elem_dofs, bcs, bc_V_zero,
 	# Compute D_Phi_h SOLD sigma
 	D_Phi_h_ufl_sold = (-inner(-epsilon*div(grad(uh))+dot(b,grad(uh))+c*uh,
 		w*dot(b_parallel,grad(psih))) + inner(f,w*dot(b_parallel,grad(psih))))*dx
+	D_Phi_h_assemble_sold = assemble(D_Phi_h_ufl_sold)
+	D_Phi_h_sold = Function(W, D_Phi_h_assemble_sold)
+	return D_Phi_h_supg, D_Phi_h_sold
+
+def der_of_ind_lim_sold_cross(V, W, cut_b_elem_dofs, bcs, bc_V_zero,
+		epsilon, b, b_perp, c, f, tau, sigma):
+	#The value of t0 might be carefully adjusted, to the same value like in the value_of_ind_lim
+	t0 = constant_t0
+	der_of_fcn_in_ind = lambda u:conditional(gt(u,t0), 0., 2.*(1/t0)**4*u**3-3.*(1/t0)**3*u**2-(1/t0)**2*u+2.*(1/t0))
+	psi = TrialFunction(V)
+	v = TestFunction(V)
+	w = TestFunction(W)
+	uh = solve_sold_cross(V, bcs, epsilon, b, b_perp, c, f, tau, sigma)
+	# Derivatives
+	derivatives_assemble = assemble(der_of_fcn_in_ind((-epsilon*div(grad(uh))+dot(b,grad(uh))+c*uh-f)**2)
+	  *(2*inner(
+	    (-epsilon*div(grad(uh))+dot(b,grad(uh))+c*uh-f),
+	    (-epsilon*div(grad(v ))+dot(b,grad(v ))+c*v))
+	  )*cut_b_elem_dofs*dx)
+	derivatives = Function(V, derivatives_assemble)
+	
+	# Adjoint Approach To Compute Derivatives According To tau and sigma
+	a = (epsilon*dot(grad(v),grad(psi)) + psi*dot(b,grad(v)) + c*v*psi)*dx +\
+	    inner(-epsilon*div(grad(v))+dot(b,grad(v))+c*v,tau*dot(b,grad(psi)))*dx +\
+	    inner(dot(b_perp,grad(v)),sigma*dot(b_perp,grad(psi)))*dx
+	L = derivatives*v*dx
+	psih = Function(V)
+	solve(a == L, psih, bc_V_zero)
+	
+	# Compute D_Phi_h SUPG tau
+	D_Phi_h_ufl_supg = (-inner(-epsilon*div(grad(uh))+dot(b,grad(uh))+c*uh,
+		w*dot(b,grad(psih))) + inner(f,w*dot(b,grad(psih))))*dx
+	D_Phi_h_assemble_supg = assemble(D_Phi_h_ufl_supg)
+	D_Phi_h_supg = Function(W, D_Phi_h_assemble_supg)
+	# Compute D_Phi_h SOLD sigma
+	D_Phi_h_ufl_sold = (-inner(dot(b_perp,grad(uh)),w*dot(b_perp,grad(psih))))*dx
 	D_Phi_h_assemble_sold = assemble(D_Phi_h_ufl_sold)
 	D_Phi_h_sold = Function(W, D_Phi_h_assemble_sold)
 	return D_Phi_h_supg, D_Phi_h_sold

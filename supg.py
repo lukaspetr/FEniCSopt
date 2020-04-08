@@ -14,7 +14,7 @@ import fenicsopt.exports.results as rs
 SC_EXAMPLE = 4 # 8, 9, 20, 55
 
 # Mesh
-NUM_CELL = 12
+NUM_CELL = 30
 mesh = UnitSquareMesh(NUM_CELL,NUM_CELL)
 h = CellDiameter(mesh)
 cell_volume = CellVolume(mesh)
@@ -37,7 +37,7 @@ bc_V_zero = DirichletBC(V, 0., whole_boundary)
 # Data
 bcs, epsilon, c, b, f, u_exact = sc_setup(V, SC_EXAMPLE)
 b_perp = as_vector([( b[1]/sqrt(b[0]**2+b[1]**2)),
-	                  (-b[0]/sqrt(b[0]**2+b[1]**2))]) # ! possible division by 0
+	                (-b[0]/sqrt(b[0]**2+b[1]**2))]) # ! possible division by 0
 
 # Basic Definitions
 p = 1 # Constant(V.ufl_element().degree())

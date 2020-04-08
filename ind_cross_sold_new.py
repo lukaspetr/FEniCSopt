@@ -1,4 +1,5 @@
 from dolfin import *
+import pylab as plt
 from scipy.optimize import minimize
 import numpy as np
 import time as pyt
@@ -11,7 +12,7 @@ import fenicsopt.exports.results as rs
 
 ################################################################################
 
-SC_EXAMPLE = 20 # 8, 9, 20, 55
+SC_EXAMPLE = 1 # 8, 9, 20, 55
 
 # Mesh
 NUM_CELL = 33
@@ -79,10 +80,10 @@ for setup in setups:
 		                  (-b[0]/sqrt(b[0]**2+b[1]**2))]) # ! possible division by 0
 
 	# Basic Definitions
-	p = 1 # Constant(V.ufl_element().degree())
+	p = setup["V_DEGREE"] # Constant(V.ufl_element().degree())
 	tau = compute_tau(W, h, p, epsilon, b)
 	uh = solve_supg(V, bcs, epsilon, b, c, f, tau)
-	tau2 = compute_sold_tau_codina(uh, 0.7, W, h, epsilon, b, c, f)
+	tau2 = iterate_sold_cross(mesh, h, V, W, bcs, epsilon, b, b_perp, c, f, tau, uh, 0.999)
 
 	# Phi and dPhi Functions
 	def phi(tau):
@@ -94,8 +95,7 @@ for setup in setups:
 		yh.vector()[:] = tau1
 		yh2 = Function(W)
 		yh2.vector()[:] = tau2
-		error = value_of_ind_cross_sold(V, cut_b_elem_dofs, bcs,
-			epsilon, b, b_perp, c, f, yh, yh2)
+		error = value_of_ind_lim_sold_cross(V, cut_b_elem_dofs, bcs, epsilon, b, b_perp, c, f, yh, yh2) 
 		t_length = pyt.time()-start
 		results.append([t_length,error])
 		if t_length < 30:
@@ -109,7 +109,7 @@ for setup in setups:
 		yh.vector()[:] = tau1
 		yh2 = Function(W)
 		yh2.vector()[:] = tau2
-		D_Phi_h_supg, D_Phi_h_sold = der_of_ind_cross_sold(V, W,
+		D_Phi_h_supg, D_Phi_h_sold = der_of_ind_lim_sold_cross(V, W,
 			cut_b_elem_dofs, bcs, bc_V_zero,
 			epsilon, b, b_perp, c, f, yh, yh2)
 		der1 = D_Phi_h_supg.vector().get_local()
@@ -119,23 +119,22 @@ for setup in setups:
 
 	# Minimization (Bounds Are Set Up First)
 	initial1 = tau.vector().get_local()
-	initial2 = 1.0 * tau2.vector().get_local()
+	initial2 = tau2.vector().get_local()
 	initial = np.concatenate((initial1, initial2), axis=0)
-	lower_bound1 = 1 * initial1
-	upper_bound1 = 1 * initial1
+	lower_bound1 = 0 * initial1
+	upper_bound1 = 10 * initial1
 	lower_bound2 = 0 * initial2
-	upper_bound2 = 5 * initial2
+	upper_bound2 = 10 * initial2
 	yh_bounds1 = np.array([lower_bound1,upper_bound1])
 	yh_bounds2 = np.array([lower_bound2,upper_bound2])
 	yh_bounds = np.concatenate((yh_bounds1, yh_bounds2), axis=1)
-	print(yh_bounds)
 	yh_bounds = np.transpose(yh_bounds)
 
 	results = []
 	start = pyt.time()
 	phi_30 = 1e+10
 	res = minimize(phi, initial, method='L-BFGS-B', jac=dPhi, bounds=yh_bounds,
-	  options={'gtol': 1e-14, 'ftol': 1e-14, 'maxiter': 250, 'disp': True})
+	  options={'gtol': 1e-14, 'ftol': 1e-14, 'maxiter': 500, 'disp': True})
 
 	# Results Of Minimization
 	yh1 = Function(W)
@@ -145,7 +144,8 @@ for setup in setups:
 	tau2 = tau[np.int(len(tau)/2):]
 	yh1.vector()[:] = tau1
 	yh2.vector()[:] = tau2
-	uh = solve_sold(V, bcs, epsilon, b, b_perp, c, f, yh1, yh2)
+	uh = solve_sold_iso(V, bcs, epsilon, b, b_perp, c, f, yh1, yh2)
+	
 	res_phi = phi(tau)
 	
 	one = project(1., V)
@@ -161,8 +161,8 @@ for setup in setups:
 	                 'h': h_average,
 	                 'error_l2': l2_norm_of_error}
 	global_results.append(global_result)
-	rs.make_results('RESULTS/' + str(SC_EXAMPLE) + 'indCrossSOLDCross', NUM_CELL, V, W, uh, u_exact, yh1, res_phi, results)
-	rs.make_results_sold_par('RESULTS/' + str(SC_EXAMPLE) + 'indCrossSOLDCross', NUM_CELL, V, W, yh2)
+	rs.make_results('RESULTS/' + str(SC_EXAMPLE) + 'indCrossSOLDNew', NUM_CELL, V, W, uh, u_exact, yh1, res_phi, results)
+	rs.make_results_sold_par('RESULTS/' + str(SC_EXAMPLE) + 'indCrossSOLDNew', NUM_CELL, V, W, yh2)
 
 # Global results
-rs.make_global_results('RESULTS/' + str(SC_EXAMPLE) + 'indCrossSOLDCross', global_results)
+rs.make_global_results('RESULTS/' + str(SC_EXAMPLE) + 'indCrossSOLDNew', global_results)

@@ -11,8 +11,8 @@ import fenicsopt.exports.results as rs
 
 ################################################################################
 
-SC_EXAMPLE = 3 # 1, 2, 8, 9, 20, 55
-NUM_CELL = 12
+SC_EXAMPLE = 8 # 1, 2, 8, 9, 20, 55
+NUM_CELL = 33
 
 # Mesh
 mesh = UnitSquareMesh(NUM_CELL,NUM_CELL)
@@ -70,7 +70,7 @@ for setup in setups:
 		                  (-b[0]/sqrt(b[0]**2+b[1]**2))]) # ! possible division by 0
 
 	# Basic Definitions
-	p = 1 # Constant(V.ufl_element().degree())
+	p = setup["V_DEGREE"] # Constant(V.ufl_element().degree())
 	tau = compute_tau(W, h, p, epsilon, b)
 
 	# Phi and dPhi Functions
@@ -96,14 +96,14 @@ for setup in setups:
 	# Minimization (Bounds Are Set Up First)
 	initial = tau.vector().get_local()
 	lower_bound = 0 * initial
-	upper_bound = 5.0 * initial
+	upper_bound = 10 * initial
 	yh_bounds = np.array([lower_bound,upper_bound])
 	yh_bounds = np.transpose(yh_bounds)
 	results = []
 	start = pyt.time()
 	phi_30 = 1e+10
 	res = minimize(phi, initial, method='L-BFGS-B', jac=dPhi, bounds=yh_bounds,
-	  options={'gtol': 1e-16, 'ftol': 1e-16, 'maxiter': 300, 'disp': True})
+	  options={'gtol': 1e-16, 'ftol': 1e-16, 'maxiter': 500, 'disp': True})
 
 	# Results Of Minimization
 	yh = Function(W)
