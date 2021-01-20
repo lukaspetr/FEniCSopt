@@ -14,7 +14,7 @@ import fenicsopt.exports.results as rs
 SC_EXAMPLE = 2 # 8, 9, 20, 55
 
 # Mesh
-NUM_CELL = 30
+NUM_CELL = 65
 mesh = UnitSquareMesh(NUM_CELL,NUM_CELL)
 h = CellDiameter(mesh)
 cell_volume = CellVolume(mesh)
@@ -37,13 +37,15 @@ bc_V_zero = DirichletBC(V, 0., whole_boundary)
 # Data
 bcs, epsilon, c, b, f, u_exact = sc_setup(V, SC_EXAMPLE)
 b_perp = as_vector([( b[1]/sqrt(b[0]**2+b[1]**2)),
-	                  (-b[0]/sqrt(b[0]**2+b[1]**2))]) # ! possible division by 0
+                    (-b[0]/sqrt(b[0]**2+b[1]**2))]) # ! possible division by 0
 
 # Basic Definitions
 p = 1 # Constant(V.ufl_element().degree())
 tau = compute_tau(W, h, p, epsilon, b)
 
 uh = solve_supg(V, bcs, epsilon, b, c, f, tau)
+tau2 = iterate_sold_cross(mesh, h, V, W, bcs, epsilon, b, b_perp, c, f, tau, uh, 0.9999)
+uh = solve_sold_cross(V, bcs, epsilon, b, b_perp, c, f, tau, tau2)
 
 one = project(1., V)
 area = assemble(one*dx)
@@ -52,5 +54,7 @@ h_average = assemble(h*dx)/area
 error_function = Function(V, assemble(abs(uh-u_exact)*v*dx))
 l2_norm_of_error = norm(error_function, 'l2')
 
+plot(uh)
+
 results = []
-rs.make_results('RESULTS/' + str(SC_EXAMPLE) + 'SUPG', NUM_CELL, V, W, uh, u_exact, tau, 1., results)
+rs.make_results('RESULTS/' + str(SC_EXAMPLE) + 'SOLD', NUM_CELL, V, W, uh, u_exact, tau2, 1., results)

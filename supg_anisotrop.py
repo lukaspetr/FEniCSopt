@@ -3,6 +3,7 @@ from scipy.optimize import minimize
 import numpy as np
 import time as pyt
 import pprint
+import matplotlib.pyplot as plt
 coth = lambda x: 1./np.tanh(x)
 
 from fenicsopt.core.convdif import *
@@ -11,11 +12,15 @@ import fenicsopt.exports.results as rs
 
 ################################################################################
 
-SC_EXAMPLE = 2 # 8, 9, 20, 55
+SC_EXAMPLE = 1 # 8, 9, 20, 55
 
 # Mesh
-NUM_CELL = 30
-mesh = UnitSquareMesh(NUM_CELL,NUM_CELL)
+NUM_CELL = 33
+#mesh = UnitSquareMesh(NUM_CELL,NUM_CELL)
+mesh = Mesh('anisotrop.xml')
+plot(mesh)
+plt.show()
+
 h = CellDiameter(mesh)
 cell_volume = CellVolume(mesh)
 DG0 = FunctionSpace(mesh, "DG", 0)
@@ -52,5 +57,8 @@ h_average = assemble(h*dx)/area
 error_function = Function(V, assemble(abs(uh-u_exact)*v*dx))
 l2_norm_of_error = norm(error_function, 'l2')
 
+plot(uh)
+plt.show()
+
 results = []
-rs.make_results('RESULTS/' + str(SC_EXAMPLE) + 'SUPG', NUM_CELL, V, W, uh, u_exact, tau, 1., results)
+rs.make_results_anisotrop('RESULTS/' + str(SC_EXAMPLE) + 'SUPG_ANISOTROP', mesh, V, W, uh, u_exact, tau, 1., results)

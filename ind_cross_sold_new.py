@@ -61,8 +61,6 @@ setups = [
 '''
 setups = [
 	{ "V_TYPE": "CG", "V_DEGREE": 1, "W_TYPE": "DG", "W_DEGREE": 0 },
-	{ "V_TYPE": "CG", "V_DEGREE": 1, "W_TYPE": "DG", "W_DEGREE": 1 },
-	{ "V_TYPE": "CG", "V_DEGREE": 2, "W_TYPE": "DG", "W_DEGREE": 1 },
 ]
 
 global_results = []
@@ -120,11 +118,12 @@ for setup in setups:
 	# Minimization (Bounds Are Set Up First)
 	initial1 = tau.vector().get_local()
 	initial2 = tau2.vector().get_local()
-	initial = np.concatenate((initial1, initial2), axis=0)
+	initial2_start = 0 * initial2
+	initial = np.concatenate((initial1, initial2_start), axis=0)
 	lower_bound1 = 0 * initial1
-	upper_bound1 = 10 * initial1
+	upper_bound1 = 2 * initial1
 	lower_bound2 = 0 * initial2
-	upper_bound2 = 10 * initial2
+	upper_bound2 = 1 * initial2
 	yh_bounds1 = np.array([lower_bound1,upper_bound1])
 	yh_bounds2 = np.array([lower_bound2,upper_bound2])
 	yh_bounds = np.concatenate((yh_bounds1, yh_bounds2), axis=1)
@@ -134,7 +133,7 @@ for setup in setups:
 	start = pyt.time()
 	phi_30 = 1e+10
 	res = minimize(phi, initial, method='L-BFGS-B', jac=dPhi, bounds=yh_bounds,
-	  options={'gtol': 1e-14, 'ftol': 1e-14, 'maxiter': 500, 'disp': True})
+	  options={'gtol': 1e-16, 'ftol': 1e-16, 'maxiter': 700, 'disp': True})
 
 	# Results Of Minimization
 	yh1 = Function(W)
@@ -144,7 +143,8 @@ for setup in setups:
 	tau2 = tau[np.int(len(tau)/2):]
 	yh1.vector()[:] = tau1
 	yh2.vector()[:] = tau2
-	uh = solve_sold_iso(V, bcs, epsilon, b, b_perp, c, f, yh1, yh2)
+	#uh = solve_sold_iso(V, bcs, epsilon, b, b_perp, c, f, yh1, yh2)
+	uh = solve_sold_cross(V, bcs, epsilon, b, b_perp, c, f, yh1, yh2)
 	
 	res_phi = phi(tau)
 	

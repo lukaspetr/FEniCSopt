@@ -3,7 +3,7 @@ import numpy as np
 
 coth = lambda x: 1./np.tanh(x)
 eta = lambda x: 2.*x*(1-x)
-constant_t0 = 0.02
+constant_t0 = 0.02 # 0.02
 
 # Make properly the function which cuts the dofs of boundary elements
 def get_boundary(mesh, DG0):
