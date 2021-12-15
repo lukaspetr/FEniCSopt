@@ -15,7 +15,7 @@ import fenicsopt.exports.results as rs
 SC_EXAMPLE = 1 # 8, 9, 20, 55
 
 # Mesh
-NUM_CELL = 33
+NUM_CELL = 24
 mesh = UnitSquareMesh(NUM_CELL,NUM_CELL)
 h = CellDiameter(mesh)
 cell_volume = CellVolume(mesh)
@@ -74,6 +74,7 @@ for setup in setups:
 
 	# Data
 	bcs, epsilon, c, b, f, u_exact = sc_setup(V, SC_EXAMPLE)
+	epsilon = 1e-4
 	b_perp = as_vector([( b[1]/sqrt(b[0]**2+b[1]**2)),
 		                  (-b[0]/sqrt(b[0]**2+b[1]**2))]) # ! possible division by 0
 
@@ -121,7 +122,7 @@ for setup in setups:
 	initial2_start = 0 * initial2
 	initial = np.concatenate((initial1, initial2_start), axis=0)
 	lower_bound1 = 0 * initial1
-	upper_bound1 = 2 * initial1
+	upper_bound1 = 5 * initial1
 	lower_bound2 = 0 * initial2
 	upper_bound2 = 1 * initial2
 	yh_bounds1 = np.array([lower_bound1,upper_bound1])

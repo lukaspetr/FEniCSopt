@@ -11,8 +11,8 @@ import fenicsopt.exports.results as rs
 
 ################################################################################
 
-SC_EXAMPLE = 1 # 1, 2, 8, 9, 20, 55
-NUM_CELL = 33
+SC_EXAMPLE = 2 # 1, 2, 8, 9, 20, 55
+NUM_CELL = 72
 
 # Mesh
 mesh = UnitSquareMesh(NUM_CELL,NUM_CELL)  
@@ -93,7 +93,7 @@ for setup in setups:
 	# Minimization (Bounds Are Set Up First)
 	initial = tau.vector().get_local()
 	lower_bound = 0 * initial
-	upper_bound = 2 * initial
+	upper_bound = 10 * initial
 	yh_bounds = np.array([lower_bound,upper_bound])
 	yh_bounds = np.transpose(yh_bounds)
 	results = []

@@ -127,7 +127,7 @@ for setup in setups:
 	lower_bound1 = 0 * initial1
 	upper_bound1 = 2 * initial1
 	lower_bound2 = 0 * initial2
-	upper_bound2 = 1 * initial2
+	upper_bound2 = 2 * initial2
 	yh_bounds1 = np.array([lower_bound1,upper_bound1])
 	yh_bounds2 = np.array([lower_bound2,upper_bound2])
 	yh_bounds = np.concatenate((yh_bounds1, yh_bounds2), axis=1)

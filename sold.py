@@ -11,10 +11,10 @@ import fenicsopt.exports.results as rs
 
 ################################################################################
 
-SC_EXAMPLE = 2 # 8, 9, 20, 55
+SC_EXAMPLE = 1 # 8, 9, 20, 55
 
 # Mesh
-NUM_CELL = 65
+NUM_CELL = 24
 mesh = UnitSquareMesh(NUM_CELL,NUM_CELL)
 h = CellDiameter(mesh)
 cell_volume = CellVolume(mesh)
@@ -36,6 +36,7 @@ bc_V_zero = DirichletBC(V, 0., whole_boundary)
 
 # Data
 bcs, epsilon, c, b, f, u_exact = sc_setup(V, SC_EXAMPLE)
+epsilon = 1e-4
 b_perp = as_vector([( b[1]/sqrt(b[0]**2+b[1]**2)),
                     (-b[0]/sqrt(b[0]**2+b[1]**2))]) # ! possible division by 0
 

@@ -99,9 +99,6 @@ def make_results(SC_EXAMPLE, NUM_CELL, V, W, uh, u_exact, tau, res, results):
 
 
 
-
-
-
 def make_results_anisotrop(SC_EXAMPLE, mesh, V, W, uh, u_exact, tau, res, results):
 
 	V_DEGREE = V.ufl_element().degree()
@@ -118,6 +115,11 @@ def make_results_anisotrop(SC_EXAMPLE, mesh, V, W, uh, u_exact, tau, res, result
 	# Plot Solution And Exact Solution With Gnuplot
 	gnuplot_dg1(folder + hash + '.gnu', mesh, uh)
 	gnuplot_dg1(folder + hash + '.exact.gnu', mesh, u_exact)
+	
+	# Plotting inflow and outflow profiles, important as we have no hidden-3d possibility for anisotropic meshes
+	gnuplot_x_eq_0(folder + hash + '_x_eq_0.gnu', mesh, uh)
+	gnuplot_y_eq_0(folder + hash + '_y_eq_0.gnu', mesh, uh)
+	
 	template = """
 		unset logscale x
 		unset logscale y
@@ -185,12 +187,6 @@ def make_results_anisotrop(SC_EXAMPLE, mesh, V, W, uh, u_exact, tau, res, result
 		+ folder + hash + '.exact.cropped.eps\n', 'r')
 	popen6 = os.popen('epstool --copy --bbox ' + folder + hash + '.eps '
 		+ folder + hash + '.cropped.eps\n', 'r')
-
-
-
-
-
-
 
 
 
@@ -371,6 +367,8 @@ def make_global_results_h(SC_EXAMPLE, global_results):
 	popen2 = os.popen('gnuplot ' + folder + 'gnu.h.cmd\n', 'r')
 	popen3 = os.popen('epstool --copy --bbox ' + folder + 'h.eps '
 		+ folder + 'h.cropped.eps\n')
+
+
 
 # Make the line of phi
 def make_line_results(SC_EXAMPLE, V, W, results):

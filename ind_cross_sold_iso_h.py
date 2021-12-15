@@ -11,7 +11,7 @@ import fenicsopt.exports.results as rs
 
 ################################################################################
 
-SC_EXAMPLE = 20 # 8, 9, 20, 55
+SC_EXAMPLE = 8 # 8, 9, 20, 55
 
 setup =	{ "V_TYPE": "CG", "V_DEGREE": 1, "W_TYPE": "DG", "W_DEGREE": 0 }
 
@@ -64,8 +64,8 @@ for NUM_CELL in range(32, 34, 1):
   def phi(tau):
     global results
     global phi_30
-    tau1 = tau[:len(tau)/2]
-    sigma = tau[len(tau)/2:]
+    tau1 = tau[:int(len(tau)/2)]
+    sigma = tau[int(len(tau)/2):]
     yh = Function(W)
     yh.vector()[:] = tau1
     yh2 = Function(W)
@@ -79,8 +79,8 @@ for NUM_CELL in range(32, 34, 1):
     return error
 
   def dPhi(tau):
-    tau1 = tau[:len(tau)/2]
-    sigma = tau[len(tau)/2:]
+    tau1 = tau[:int(len(tau)/2)]
+    sigma = tau[int(len(tau)/2):]
     yh = Function(W)
     yh.vector()[:] = tau1
     yh2 = Function(W)
@@ -98,9 +98,9 @@ for NUM_CELL in range(32, 34, 1):
   initial2 = 0.9 * sigma.vector().get_local()
   initial = np.concatenate((initial1, initial2), axis=0)
   lower_bound1 = 0.0 * initial1
-  upper_bound1 = 2.0 * initial1
+  upper_bound1 = 5.0 * initial1
   lower_bound2 = 0.0 * initial2
-  upper_bound2 = 0.0 * initial2
+  upper_bound2 = 5.0 * initial2
   yh_bounds1 = np.array([lower_bound1,upper_bound1])
   yh_bounds2 = np.array([lower_bound2,upper_bound2])
   yh_bounds = np.concatenate((yh_bounds1, yh_bounds2), axis=1)
@@ -117,8 +117,8 @@ for NUM_CELL in range(32, 34, 1):
   yh1 = Function(W)
   yh2 = Function(W)
   tau = res.x
-  tau1 = tau[:len(tau)/2]
-  sigma = tau[len(tau)/2:]
+  tau1 = tau[:int(len(tau)/2)]
+  sigma = tau[int(len(tau)/2):]
   yh1.vector()[:] = tau1
   yh2.vector()[:] = sigma
 

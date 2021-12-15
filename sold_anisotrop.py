@@ -11,10 +11,10 @@ import fenicsopt.exports.results as rs
 
 ################################################################################
 
-SC_EXAMPLE = 1 # 8, 9, 20, 55
+SC_EXAMPLE = 2 # 8, 9, 20, 55
 
 # Mesh
-NUM_CELL = 33
+NUM_CELL = 24
 #mesh = UnitSquareMesh(NUM_CELL,NUM_CELL)
 mesh = Mesh('anisotrop.xml')
 

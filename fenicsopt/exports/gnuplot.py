@@ -24,6 +24,51 @@ def gnuplot_dg1(file, mesh, fun):
 		if (i == 1):
 			print('%e  %e  %e' % (vs[0].x(),vs[0].y(),fun(vs[0].x(),vs[0].y())), file=file)
 		print('', file=file)
+	print('exporting ' + str(i) + ' cells done.')
+
+################################################################################
+
+# discontinuous piecewise linear output
+def gnuplot_y_eq_0(file, mesh, fun):
+	file = open(file, 'w+')
+	i = 0
+	vs = []
+	for myCell in cells(mesh):
+		for v in vertices(myCell):
+			if v.midpoint().y() == 0:
+				vs.append({
+					'x': v.midpoint().x(),
+					'y': v.midpoint().y(),
+					'z': fun(v.midpoint().x(),v.midpoint().y()),
+				})
+
+	vs = sorted(vs, key = lambda i: i['x'])
+
+	for i in range(len(vs)):
+		print('%e  %e  %e' % (vs[i].get('x'),vs[i].get('y'),vs[i].get('z')), file=file)
+	print('', file=file)
+
+################################################################################
+
+# discontinuous piecewise linear output
+def gnuplot_x_eq_0(file, mesh, fun):
+	file = open(file, 'w+')
+	i = 0
+	vs = []
+	for myCell in cells(mesh):
+		for v in vertices(myCell):
+			if v.midpoint().x() == 0:
+				vs.append({
+					'x': v.midpoint().x(),
+					'y': v.midpoint().y(),
+					'z': fun(v.midpoint().x(),v.midpoint().y()),
+				})
+
+	vs = sorted(vs, key = lambda i: i['y'])
+
+	for i in range(len(vs)):
+		print('%e  %e  %e' % (vs[i].get('x'),vs[i].get('y'),vs[i].get('z')), file=file)
+	print('', file=file)
 
 ################################################################################
 
